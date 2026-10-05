@@ -8,17 +8,75 @@
 }
 
 .cartao-produto {
-  border-color: $linha;
+  border: 1px solid $linha;
+  border-radius: 1rem;
   overflow: hidden;
+  background: #fff;
 
-  &__imagem { height: 160px; background: rgba($verde, .12); }
-  .preco { color: $verde; font-weight: 700; font-size: 1.15rem; }
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  &__foto,
+  &__imagem {
+    width: 100%;
+    height: 170px;
+  }
+
+  &__foto {
+    object-fit: cover;
+  }
+
+  &__imagem {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba($verde, 0.12);
+
+    span {
+      color: $verde;
+      font-size: 2rem;
+      font-weight: 700;
+    }
+  }
+
+  &__etiquetas {
+    min-height: 1.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  &__nome {
+    margin-bottom: 0.35rem;
+    font-size: 1rem;
+    font-weight: 700;
+  }
+
+  &__produtor {
+    margin-bottom: 1rem;
+    color: $texto-secundario;
+    font-size: 0.85rem;
+  }
+
+  .preco {
+    margin-bottom: 1rem;
+    color: $verde;
+    font-size: 1.15rem;
+    font-weight: 700;
+  }
+
   .etiqueta-bio {
-    align-self: flex-start;
-    font-size: .7rem; font-weight: 700;
-    padding: .15rem .5rem; margin-bottom: .5rem;
-    border-radius: .35rem;
-    background: rgba($verde, .12); color: $verde-escuro;
+    display: inline-block;
+    padding: 0.2rem 0.5rem;
+    border-radius: 999px;
+    background: rgba($verde, 0.12);
+    color: $verde-escuro;
+    font-size: 0.7rem;
+    font-weight: 700;
+  }
+}
+
+@media (hover: hover) {
+  .cartao-produto:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 0.5rem 1.25rem rgba($tinta, 0.08);
   }
 }
 
@@ -30,8 +88,18 @@
 }
 
 .destaque {
+  display: grid;
+  gap: 2rem;
   padding: 2rem 0 2.5rem;
   margin-bottom: 1rem;
+}
+
+@include a-partir-de(lg) {
+  .destaque {
+    grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.8fr);
+    align-items: center;
+    gap: 3rem;
+  }
 }
 
 .destaque__conteudo {
@@ -47,6 +115,7 @@
 }
 
 .destaque__conteudo h1 {
+  font-family: Georgia, serif;
   margin-bottom: 1rem;
   font-size: 2rem;
   line-height: 1.1;
@@ -158,5 +227,93 @@
 @include a-partir-de(lg) {
   .seccao-produtos__cabecalho {
     max-width: 650px;
+  }
+}
+
+.filtros .form-control {
+  max-width: 520px;
+  padding: 0.75rem 1rem;
+  border-color: $linha;
+  border-radius: 0.75rem;
+
+  &:focus {
+    border-color: $verde;
+    box-shadow: 0 0 0 0.2rem rgba($verde, 0.15);
+  }
+}
+
+.filtros .form-check {
+  margin-top: 0.25rem;
+}
+
+.filtros .form-check-input:checked {
+  background-color: $verde;
+  border-color: $verde;
+}
+
+.leilao-destaque {
+  padding: 1.5rem;
+  margin-top: 0.5rem;
+  border-radius: 1rem;
+  background: $verde-escuro;
+  color: #fff;
+}
+
+@include a-partir-de(lg) {
+  .leilao-destaque {
+    margin-top: 0;
+  }
+}
+
+.leilao-destaque__topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.leilao-destaque__estado {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.leilao-destaque__participantes {
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+
+.leilao-destaque h2 {
+  margin-bottom: 0.5rem;
+  font-size: 1.4rem;
+  line-height: 1.2;
+}
+
+.leilao-destaque__produtor {
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+.leilao-destaque__dados {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+
+  div {
+    display: flex;
+    flex-direction: column;
+  }
+
+  span {
+    margin-bottom: 0.25rem;
+    font-size: 0.75rem;
+    opacity: 0.75;
+  }
+
+  strong {
+    font-size: 1.2rem;
   }
 }

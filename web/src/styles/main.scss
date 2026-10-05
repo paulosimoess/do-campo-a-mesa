@@ -4,15 +4,74 @@
 @import 'mixins';
 @import 'catalogo';
 
-.barra-topo { background: #fff; border-bottom: 1px solid $linha; }
-.marca { font-family: Georgia, serif; font-weight: 700; color: $tinta; }
-.texto-secundario { color: $texto-secundario; }
-
-.destaque h1 {
-  font-family: Georgia, serif;
-  font-size: 2rem;
-  @include a-partir-de(lg) { font-size: 3rem; }
+.barra-topo {
+  background: #fff;
+  border-bottom: 1px solid $linha;
 }
+
+.barra-topo .navbar {
+  padding-top: 0.85rem;
+  padding-bottom: 0.85rem;
+}
+
+.marca {
+  font-family: Georgia, serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: $tinta;
+
+  &:hover,
+  &:focus {
+    color: $verde;
+  }
+}
+
+.navegacao-principal {
+  margin-top: 1rem;
+
+  .nav-link {
+    color: $texto-secundario;
+    font-weight: 500;
+
+    &:hover {
+      color: $verde;
+    }
+
+    &.active {
+      color: $verde;
+      font-weight: 700;
+    }
+  }
+}
+
+.navbar-acoes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+
+  .btn {
+    width: 100%;
+  }
+}
+
+@include a-partir-de(lg) {
+  .navegacao-principal {
+    margin-top: 0;
+    margin-left: 1.5rem;
+  }
+
+  .navbar-acoes {
+    flex-direction: row;
+    align-items: center;
+    margin-top: 0;
+
+    .btn {
+      width: auto;
+    }
+  }
+}
+.texto-secundario { color: $texto-secundario; }
 
 .formulario-estreito { max-width: 28rem; margin-inline: auto; }
 

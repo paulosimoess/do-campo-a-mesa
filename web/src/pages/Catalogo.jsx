@@ -6,6 +6,7 @@ import { useCarrinho } from '../context/CarrinhoContext.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { api, USAR_DADOS_SIMULADOS } from '../api/client.js';
 import produtosSimulados from '../data/produtos.json';
+import CartaoLeilaoDestaque from '../components/CartaoLeilaoDestaque.jsx';
 
 const CATEGORIAS = ['Todos', 'Hortícolas', 'Fruta', 'Mel', 'Vinho', 'Queijo', 'Padaria'];
 
@@ -75,6 +76,8 @@ export default function Catalogo() {
             </Link>
           </div>
         </div>
+
+        <CartaoLeilaoDestaque />
       </section>
 
       <section
