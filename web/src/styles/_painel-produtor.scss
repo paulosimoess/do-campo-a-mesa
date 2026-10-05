@@ -1,0 +1,80 @@
+.painel-produtor {
+  padding-bottom: 3rem;
+}
+
+.painel-produtor__cabecalho {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.painel-produtor__etiqueta {
+  margin-bottom: 0.5rem;
+  color: $terracota;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.painel-produtor__cabecalho h1 {
+  margin-bottom: 0.5rem;
+}
+
+.painel-produtor__acoes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.painel-produtor__indicadores {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+.painel-indicador {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 1.25rem;
+  border: 1px solid $linha;
+  border-radius: 1rem;
+  background: #fff;
+
+  span {
+    color: $texto-secundario;
+    font-size: 0.85rem;
+  }
+
+  strong {
+    color: $tinta;
+    font-size: 1.75rem;
+  }
+
+  small {
+    color: $texto-secundario;
+  }
+}
+
+@include a-partir-de(md) {
+  .painel-produtor__indicadores {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .painel-produtor__acoes {
+    flex-direction: row;
+  }
+}
+
+@include a-partir-de(lg) {
+  .painel-produtor__cabecalho {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  .painel-produtor__indicadores {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}

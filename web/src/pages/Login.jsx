@@ -11,9 +11,20 @@ export default function Login() {
 
   async function submeter(e) {
     e.preventDefault();
+
     try {
-      await entrar(dados.email, dados.password);
-      navigate(location.state?.de || '/');
+      setErro('');
+
+      const utilizador = await entrar(
+        dados.email,
+        dados.password
+      );
+
+      navigate(
+        location.state?.de ||
+        INICIO[utilizador.papel] ||
+        '/'
+      );
     } catch (err) {
       setErro(err.message);
     }

@@ -8,9 +8,58 @@ export function AuthProvider({ children }) {
     try { return JSON.parse(localStorage.getItem('sessao')) || null; } catch { return null; }
   });
 
-  // TODO (Passo 6): chamar POST /api/auth/login e guardar { token, utilizador }
-  async function entrar(email, password) { // eslint-disable-line no-unused-vars
-    throw new Error('Login por implementar');
+  async function entrar(email, password) {
+    const utilizadoresSimulados = [
+      {
+        email: 'comprador@exemplo.pt',
+        password: 'password123',
+        utilizador: {
+          id: 'comprador-1',
+          nome: 'Comprador Teste',
+          email: 'comprador@exemplo.pt',
+          papel: 'comprador'
+        }
+      },
+      {
+        email: 'produtor@exemplo.pt',
+        password: 'password123',
+        utilizador: {
+          id: 'produtor-1',
+          nome: 'Produtor Teste',
+          email: 'produtor@exemplo.pt',
+          papel: 'produtor'
+        }
+      },
+      {
+        email: 'admin@exemplo.pt',
+        password: 'password123',
+        utilizador: {
+          id: 'admin-1',
+          nome: 'Administrador',
+          email: 'admin@exemplo.pt',
+          papel: 'admin'
+        }
+      }
+    ];
+
+    const conta = utilizadoresSimulados.find(
+      (u) =>
+        u.email === email.trim().toLowerCase() &&
+        u.password === password
+    );
+
+    if (!conta) {
+      throw new Error('Credenciais inválidas');
+    }
+
+    const novaSessao = {
+      token: 'token-simulado',
+      utilizador: conta.utilizador
+    };
+
+    guardarSessao(novaSessao);
+
+    return conta.utilizador;
   }
 
   function sair() {
