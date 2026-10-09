@@ -1,0 +1,77 @@
+.encomendas {
+  padding-bottom: 3rem;
+}
+
+.encomendas__cabecalho {
+  margin-bottom: 2rem;
+}
+
+.encomendas__etiqueta {
+  margin-bottom: 0.5rem;
+  color: $terracota;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.encomendas__lista {
+  display: grid;
+  gap: 1rem;
+}
+
+.encomenda-cartao {
+  padding: 1.25rem;
+  border: 1px solid $linha;
+  border-radius: 1rem;
+  background: #fff;
+}
+
+.encomenda-cartao__topo {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.encomenda-cartao__numero {
+  margin-bottom: 0.25rem;
+  color: $terracota;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.encomenda-cartao h2 {
+  margin-bottom: 0;
+  font-size: 1.1rem;
+}
+
+.encomenda-cartao__resumo {
+  display: flex;
+  flex-direction: column;
+
+  span {
+    color: $texto-secundario;
+    font-size: 0.85rem;
+  }
+
+  strong {
+    font-size: 1.1rem;
+  }
+}
+
+.encomenda-cartao__acoes {
+  margin-top: 1rem;
+}
+
+@include a-partir-de(md) {
+  .encomenda-cartao__topo {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  .encomenda-cartao__resumo {
+    text-align: right;
+  }
+}

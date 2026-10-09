@@ -1,13 +1,186 @@
-import PorImplementar from '../components/PorImplementar.jsx';
+import { useState } from 'react';
+
+const estadoInicial = {
+  nome: '',
+  email: '',
+  password: '',
+  papel: 'comprador',
+  exploracao: '',
+  localidade: ''
+};
 
 export default function Registo() {
+  const [formulario, setFormulario] = useState(estadoInicial);
+  const [mensagem, setMensagem] = useState('');
+
+  function alterar(campo) {
+    return (e) => {
+      setFormulario((anterior) => ({
+        ...anterior,
+        [campo]: e.target.value
+      }));
+    };
+  }
+
+  function submeter(e) {
+    e.preventDefault();
+
+    setMensagem(
+      formulario.papel === 'produtor'
+        ? 'Registo de produtor simulado com sucesso.'
+        : 'Registo de comprador simulado com sucesso.'
+    );
+  }
+
   return (
-    <div className="formulario-estreito">
-      <h1>Registar</h1>
-      <PorImplementar passo={6}>
-        formulário de registo (nome, email, password, tipo de conta: comprador ou produtor;
-        para produtor: nome da exploração e localidade) que chama <code>POST /api/auth/registo</code>.
-      </PorImplementar>
-    </div>
+    <section className="registo">
+      <div className="registo__cabecalho">
+        <p className="registo__etiqueta">
+          CRIAR CONTA
+        </p>
+
+        <h1>Registar</h1>
+
+        <p className="texto-secundario">
+          Crie uma conta para comprar produtos locais ou vender enquanto produtor.
+        </p>
+      </div>
+
+      <form
+        className="registo__formulario"
+        onSubmit={submeter}
+      >
+        <div>
+          <label
+            htmlFor="nome"
+            className="form-label"
+          >
+            Nome
+          </label>
+
+          <input
+            id="nome"
+            type="text"
+            className="form-control"
+            value={formulario.nome}
+            onChange={alterar('nome')}
+            required
+          />
+        </div>
+
+        <div>
+          <label
+            htmlFor="email"
+            className="form-label"
+          >
+            Email
+          </label>
+
+          <input
+            id="email"
+            type="email"
+            className="form-control"
+            value={formulario.email}
+            onChange={alterar('email')}
+            required
+          />
+        </div>
+
+        <div>
+          <label
+            htmlFor="password"
+            className="form-label"
+          >
+            Password
+          </label>
+
+          <input
+            id="password"
+            type="password"
+            className="form-control"
+            value={formulario.password}
+            onChange={alterar('password')}
+            required
+          />
+        </div>
+
+        <div>
+          <label
+            htmlFor="papel"
+            className="form-label"
+          >
+            Tipo de conta
+          </label>
+
+          <select
+            id="papel"
+            className="form-select"
+            value={formulario.papel}
+            onChange={alterar('papel')}
+          >
+            <option value="comprador">
+              Comprador
+            </option>
+
+            <option value="produtor">
+              Produtor
+            </option>
+          </select>
+        </div>
+
+        {formulario.papel === 'produtor' && (
+          <div className="registo__campos-produtor">
+            <div>
+              <label
+                htmlFor="exploracao"
+                className="form-label"
+              >
+                Nome da exploração
+              </label>
+
+              <input
+                id="exploracao"
+                type="text"
+                className="form-control"
+                value={formulario.exploracao}
+                onChange={alterar('exploracao')}
+                required
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="localidade"
+                className="form-label"
+              >
+                Localidade
+              </label>
+
+              <input
+                id="localidade"
+                type="text"
+                className="form-control"
+                value={formulario.localidade}
+                onChange={alterar('localidade')}
+                required
+              />
+            </div>
+          </div>
+        )}
+
+        <button
+          type="submit"
+          className="btn btn-success w-100"
+        >
+          Criar conta
+        </button>
+
+        {mensagem && (
+          <div className="alert alert-success mb-0">
+            {mensagem}
+          </div>
+        )}
+      </form>
+    </section>
   );
 }

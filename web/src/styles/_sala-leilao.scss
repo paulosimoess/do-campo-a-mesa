@@ -1,0 +1,99 @@
+.sala-leilao {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  padding-bottom: 3rem;
+}
+
+.sala-leilao__cabecalho {
+  margin-bottom: 1.5rem;
+
+  h1 {
+    margin-bottom: 0.5rem;
+  }
+}
+
+.sala-leilao__etiqueta {
+  margin-bottom: 0.5rem;
+  color: $terracota;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.sala-leilao__imagem {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 260px;
+  margin-bottom: 2rem;
+  border: 1px solid $linha;
+  border-radius: 1rem;
+  background: #fff;
+  color: $texto-secundario;
+}
+
+.sala-leilao__painel {
+  padding: 1.5rem;
+  border: 1px solid $linha;
+  border-radius: 1rem;
+  background: #fff;
+}
+
+.sala-leilao__participantes {
+  margin-bottom: 1rem;
+}
+
+.sala-leilao__valor {
+  margin-bottom: 1.5rem;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.historico-licitacoes {
+  padding: 1.5rem;
+  border: 1px solid $linha;
+  border-radius: 1rem;
+  background: #fff;
+}
+
+.historico-licitacoes__cabecalho {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+
+  h2 {
+    margin-bottom: 0;
+    font-size: 1.25rem;
+  }
+}
+
+.historico-licitacoes__lista {
+  display: grid;
+}
+
+.historico-licitacoes__item {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid $linha;
+
+  &:last-child {
+    border-bottom: 0;
+  }
+}
+
+@include a-partir-de(lg) {
+  .sala-leilao {
+    grid-template-columns: minmax(0, 2fr) minmax(280px, 0.8fr);
+    align-items: start;
+  }
+
+  .sala-leilao__painel {
+    position: sticky;
+    top: 1.5rem;
+  }
+}
