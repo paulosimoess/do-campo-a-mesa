@@ -73,7 +73,6 @@ router.get('/:id', a(async (req, res) => {
 }));
 
 // POST /api/auctions  (produtor)  -> 201
-// TODO: definir licitacaoAtual.valor = precoBase e terminaEm = iniciaEm + duração
 router.post(
   '/',
   auth('produtor'),

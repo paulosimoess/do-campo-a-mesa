@@ -1,23 +1,124 @@
-# Passo 5: especificação OpenAPI da API. Validar no Swagger Editor (https://editor.swagger.io).
-# Está documentado apenas o recurso /products como exemplo.
-# TODO: documentar /auth, /producers, /orders, /auctions, /reviews e /admin.
+# Especificação OpenAPI da API Do Campo à Mesa.
+# Passo 5 - Documentação Swagger/OpenAPI.
+
 openapi: 3.0.3
+
 info:
   title: Do Campo à Mesa API
-  version: 0.1.0
-  description: API REST do mercado digital de produtores locais.
+  version: 1.0.0
+  description: >
+    API REST da plataforma Do Campo à Mesa, que liga produtores locais
+    a consumidores e estabelecimentos, incluindo encomendas, avaliações
+    e leilões.
+
 servers:
   - url: http://localhost:3000/api
+    description: Ambiente local
+
+security: []
+
+tags:
+  - name: Autenticação
+  - name: Produtos
+  - name: Produtores
+  - name: Encomendas
+  - name: Leilões
+  - name: Avaliações
+  - name: Administração
+  - name: Sistema
+
 paths:
+  /producers:
+    get:
+      tags: [Produtores]
+      summary: Listar produtores validados
+      parameters:
+        - name: localidade
+          in: query
+          description: Filtrar produtores por localidade
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Lista de produtores validados
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Producer'
+
+  /producers/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    get:
+      tags: [Produtores]
+      summary: Obter página pública de um produtor
+      responses:
+        '200':
+          description: Dados públicos do produtor, produtos e avaliação média
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  produtor:
+                    $ref: '#/components/schemas/Producer'
+                  produtos:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Product'
+                  avaliacaoMedia:
+                    type: number
+                    nullable: true
+                    example: 4.5
+        '400':
+          $ref: '#/components/responses/Erro'
+        '404':
+          $ref: '#/components/responses/Erro'
+
   /products:
     get:
       tags: [Produtos]
       summary: Pesquisar produtos
       parameters:
-        - { name: q, in: query, description: Texto no nome, schema: { type: string } }
-        - { name: categoria, in: query, schema: { type: string } }
-        - { name: precoMax, in: query, schema: { type: number } }
-        - { name: bio, in: query, schema: { type: boolean } }
+        - name: q
+          in: query
+          description: Texto a pesquisar no nome do produto
+          schema:
+            type: string
+        - name: categoria
+          in: query
+          schema:
+            $ref: '#/components/schemas/Categoria'
+        - name: precoMax
+          in: query
+          description: Preço máximo
+          schema:
+            type: number
+            minimum: 0
+        - name: bio
+          in: query
+          description: Filtrar apenas produtos biológicos
+          schema:
+            type: boolean
+        - name: epoca
+          in: query
+          description: Época do ano
+          schema:
+            type: string
+            enum: [Primavera, Verão, Outono, Inverno]
+        - name: produtor
+          in: query
+          description: Identificador do produtor
+          schema:
+            type: string
+        - name: ordenar
+          in: query
+          description: Ordenação dos resultados
+          schema:
+            type: string
+            enum: [recentes, preco_asc, preco_desc]
       responses:
         '200':
           description: Lista de produtos
@@ -25,73 +126,1304 @@ paths:
             application/json:
               schema:
                 type: array
-                items: { $ref: '#/components/schemas/Product' }
+                items:
+                  $ref: '#/components/schemas/Product'
+
     post:
       tags: [Produtos]
-      summary: Criar produto (produtor)
-      security: [ { bearerAuth: [] } ]
+      summary: Criar produto
+      description: Requer um produtor autenticado e validado.
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/ProductInput' }
+            schema:
+              $ref: '#/components/schemas/ProductInput'
       responses:
-        '201': { description: Produto criado }
-        '400': { description: Dados inválidos }
-        '401': { description: Token em falta ou inválido }
-        '403': { description: Utilizador não é produtor }
+        '201':
+          description: Produto criado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '400':
+          $ref: '#/components/responses/Erro'
+        '401':
+          $ref: '#/components/responses/Erro'
+        '403':
+          $ref: '#/components/responses/Erro'
+
   /products/{id}:
     parameters:
-      - { name: id, in: path, required: true, schema: { type: string } }
+      - $ref: '#/components/parameters/Id'
+
     get:
       tags: [Produtos]
-      summary: Detalhe de um produto
+      summary: Obter detalhe de um produto
       responses:
         '200':
           description: Produto
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Product' }
-        '404': { description: Não encontrado }
+              schema:
+                $ref: '#/components/schemas/Product'
+        '400':
+          $ref: '#/components/responses/Erro'
+        '404':
+          $ref: '#/components/responses/Erro'
+
     put:
       tags: [Produtos]
-      summary: Atualizar produto (produtor dono)
-      security: [ { bearerAuth: [] } ]
+      summary: Atualizar produto
+      description: Apenas o produtor proprietário do produto.
+      security:
+        - bearerAuth: []
       requestBody:
+        required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/ProductInput' }
+            schema:
+              $ref: '#/components/schemas/ProductUpdate'
       responses:
-        '200': { description: Produto atualizado }
-        '404': { description: Não encontrado }
+        '200':
+          description: Produto atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '400':
+          $ref: '#/components/responses/Erro'
+        '401':
+          $ref: '#/components/responses/Erro'
+        '403':
+          $ref: '#/components/responses/Erro'
+        '404':
+          $ref: '#/components/responses/Erro'
+
     delete:
       tags: [Produtos]
-      summary: Remover produto (produtor dono)
-      security: [ { bearerAuth: [] } ]
+      summary: Remover produto
+      description: Apenas o produtor proprietário do produto.
+      security:
+        - bearerAuth: []
       responses:
-        '204': { description: Removido }
-        '404': { description: Não encontrado }
+        '204':
+          description: Produto removido
+        '400':
+          $ref: '#/components/responses/Erro'
+        '401':
+          $ref: '#/components/responses/Erro'
+        '403':
+          $ref: '#/components/responses/Erro'
+        '404':
+          $ref: '#/components/responses/Erro'
+
+  /orders:
+    post:
+      tags: [Encomendas]
+      summary: Criar encomenda
+      description: >
+        Cria uma ou mais encomendas, agrupando os produtos por produtor
+        e reservando o stock de forma atómica.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderInput'
+      responses:
+        '201':
+          description: Encomendas criadas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Order'
+        '400':
+          $ref: '#/components/responses/Erro'
+        '401':
+          $ref: '#/components/responses/Erro'
+        '403':
+          $ref: '#/components/responses/Erro'
+        '409':
+          $ref: '#/components/responses/Erro'
+
+    get:
+      tags: [Encomendas]
+      summary: Listar encomendas do utilizador autenticado
+      description: >
+        Um comprador vê as suas encomendas e um produtor vê as
+        encomendas recebidas.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de encomendas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Order'
+        '401':
+          $ref: '#/components/responses/Erro'
+
+  /orders/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    get:
+      tags: [Encomendas]
+      summary: Obter detalhe de uma encomenda
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Encomenda
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '400':
+          $ref: '#/components/responses/Erro'
+        '401':
+          $ref: '#/components/responses/Erro'
+        '404':
+          $ref: '#/components/responses/Erro'
+
+  /orders/{id}/estado:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    patch:
+      tags: [Encomendas]
+      summary: Atualizar estado da encomenda
+      description: >
+        Apenas o produtor da encomenda pode alterar o estado.
+        O estado só pode avançar.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [estado]
+              properties:
+                estado:
+                  $ref: '#/components/schemas/OrderStatus'
+      responses:
+        '200':
+          description: Estado atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '400':
+          $ref: '#/components/responses/Erro'
+        '401':
+          $ref: '#/components/responses/Erro'
+        '403':
+          $ref: '#/components/responses/Erro'
+        '404':
+          $ref: '#/components/responses/Erro'
+        '409':
+          $ref: '#/components/responses/Erro'
+
+  /auctions:
+    get:
+      tags: [Leilões]
+      summary: Listar leilões
+      parameters:
+        - name: estado
+          in: query
+          description: Filtrar leilões pelo estado
+          schema:
+            $ref: '#/components/schemas/AuctionStatus'
+
+      responses:
+        '200':
+          description: Lista de leilões
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Auction'
+
+    post:
+      tags: [Leilões]
+      summary: Criar leilão
+      description: Requer um produtor autenticado e validado.
+      security:
+        - bearerAuth: []
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuctionInput'
+
+      responses:
+        '201':
+          description: Leilão criado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Auction'
+
+        '400':
+          $ref: '#/components/responses/Erro'
+
+        '401':
+          $ref: '#/components/responses/Erro'
+
+        '403':
+          $ref: '#/components/responses/Erro'
+
+  /auctions/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+
+    get:
+      tags: [Leilões]
+      summary: Obter detalhe de um leilão
+
+      responses:
+        '200':
+          description: Leilão e últimas licitações
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  leilao:
+                    $ref: '#/components/schemas/Auction'
+
+                  licitacoes:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Bid'
+
+        '400':
+          $ref: '#/components/responses/Erro'
+
+        '404':
+          $ref: '#/components/responses/Erro'
+
+  /auctions/{id}/bids:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+
+    get:
+      tags: [Leilões]
+      summary: Listar licitações de um leilão
+
+      responses:
+        '200':
+          description: Lista de licitações
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Bid'
+
+        '400':
+          $ref: '#/components/responses/Erro'
+
+        '404':
+          $ref: '#/components/responses/Erro'
+
+  /reviews:
+    get:
+      tags: [Avaliações]
+      summary: Listar avaliações visíveis
+
+      parameters:
+        - name: produtor
+          in: query
+          description: Filtrar avaliações por produtor
+          schema:
+            type: string
+
+        - name: produto
+          in: query
+          description: Filtrar avaliações por produto
+          schema:
+            type: string
+
+      responses:
+        '200':
+          description: Lista de avaliações visíveis
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Review'
+
+    post:
+      tags: [Avaliações]
+      summary: Criar avaliação
+      description: >
+        Apenas compradores podem avaliar. A encomenda tem de pertencer
+        ao comprador e estar entregue.
+      security:
+        - bearerAuth: []
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewInput'
+
+      responses:
+        '201':
+          description: Avaliação criada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+
+        '400':
+          $ref: '#/components/responses/Erro'
+
+        '401':
+          $ref: '#/components/responses/Erro'
+
+        '403':
+          $ref: '#/components/responses/Erro'
+
+        '404':
+          $ref: '#/components/responses/Erro'
+
+        '409':
+          $ref: '#/components/responses/Erro'
+
+  /reviews/{id}/denuncia:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+
+    post:
+      tags: [Avaliações]
+      summary: Denunciar avaliação
+      description: Incrementa o número de denúncias da avaliação.
+      security:
+        - bearerAuth: []
+
+      responses:
+        '204':
+          description: Avaliação denunciada
+
+        '400':
+          $ref: '#/components/responses/Erro'
+
+        '401':
+          $ref: '#/components/responses/Erro'
+
+        '404':
+          $ref: '#/components/responses/Erro'
+
+  /auth/registo:
+    post:
+      tags: [Autenticação]
+      summary: Registar utilizador
+      description: >
+        Regista um comprador ou produtor. Os produtores ficam inicialmente
+        por validar pelo administrador.
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterInput'
+
+      responses:
+        '201':
+          description: Utilizador registado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+
+        '400':
+          $ref: '#/components/responses/Erro'
+
+        '409':
+          $ref: '#/components/responses/Erro'
+
+        '501':
+          description: Endpoint ainda não implementado no Passo 5
+
+  /auth/login:
+    post:
+      tags: [Autenticação]
+      summary: Iniciar sessão
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginInput'
+
+      responses:
+        '200':
+          description: Sessão iniciada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+
+        '400':
+          $ref: '#/components/responses/Erro'
+
+        '401':
+          $ref: '#/components/responses/Erro'
+
+        '501':
+          description: Endpoint ainda não implementado no Passo 5
+
+  /auth/eu:
+    get:
+      tags: [Autenticação]
+      summary: Obter utilizador autenticado
+      security:
+        - bearerAuth: []
+
+      responses:
+        '200':
+          description: Dados do utilizador autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+        '401':
+          $ref: '#/components/responses/Erro'
+
+        '501':
+          description: Endpoint ainda não implementado no Passo 5
+
+  /admin/estatisticas:
+    get:
+      tags: [Administração]
+      summary: Obter estatísticas da plataforma
+      security:
+        - bearerAuth: []
+
+      responses:
+        '200':
+          description: Estatísticas gerais
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminStats'
+
+        '401':
+          $ref: '#/components/responses/Erro'
+
+        '403':
+          $ref: '#/components/responses/Erro'
+
+  /admin/produtores/pendentes:
+    get:
+      tags: [Administração]
+      summary: Listar produtores pendentes de validação
+      security:
+        - bearerAuth: []
+
+      responses:
+        '200':
+          description: Lista de produtores pendentes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+
+        '401':
+          $ref: '#/components/responses/Erro'
+
+        '403':
+          $ref: '#/components/responses/Erro'
+
+  /admin/produtores/{id}/validacao:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+
+    patch:
+      tags: [Administração]
+      summary: Validar ou rejeitar produtor
+      security:
+        - bearerAuth: []
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [aprovado]
+              properties:
+                aprovado:
+                  type: boolean
+                  example: true
+
+      responses:
+        '200':
+          description: Estado de validação atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+        '400':
+          $ref: '#/components/responses/Erro'
+
+        '401':
+          $ref: '#/components/responses/Erro'
+
+        '403':
+          $ref: '#/components/responses/Erro'
+
+        '404':
+          $ref: '#/components/responses/Erro'
+
+  /admin/reviews/denunciadas:
+    get:
+      tags: [Administração]
+      summary: Listar avaliações denunciadas
+      security:
+        - bearerAuth: []
+
+      responses:
+        '200':
+          description: Lista de avaliações denunciadas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Review'
+
+        '401':
+          $ref: '#/components/responses/Erro'
+
+        '403':
+          $ref: '#/components/responses/Erro'
+
+  /admin/reviews/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+
+    patch:
+      tags: [Administração]
+      summary: Alterar visibilidade de uma avaliação
+      security:
+        - bearerAuth: []
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [visivel]
+              properties:
+                visivel:
+                  type: boolean
+                  example: false
+
+      responses:
+        '200':
+          description: Avaliação atualizada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+
+        '400':
+          $ref: '#/components/responses/Erro'
+
+        '401':
+          $ref: '#/components/responses/Erro'
+
+        '403':
+          $ref: '#/components/responses/Erro'
+
+        '404':
+          $ref: '#/components/responses/Erro'
+
+  /health:
+    get:
+      summary: Verificar estado da API
+      tags: [Sistema]
+
+      responses:
+        '200':
+          description: API disponível
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  estado:
+                    type: string
+                    example: ok
+
+  /products/{id}/imagem:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+
+    post:
+      tags: [Produtos]
+      summary: Carregar imagem de um produto
+      description: >
+        Permite ao produtor proprietário associar uma imagem ao produto.
+        Este endpoint será implementado no passo de armazenamento/cloud.
+      security:
+        - bearerAuth: []
+
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [imagem]
+              properties:
+                imagem:
+                  type: string
+                  format: binary
+
+      responses:
+        '200':
+          description: Imagem associada ao produto
+
+        '400':
+          $ref: '#/components/responses/Erro'
+
+        '401':
+          $ref: '#/components/responses/Erro'
+
+        '403':
+          $ref: '#/components/responses/Erro'
+
+        '404':
+          $ref: '#/components/responses/Erro'
+
+        '501':
+          description: Endpoint ainda não implementado
+
 components:
   securitySchemes:
-    bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        example: 66f5a1c2e4b0a1b2c3d4e5f6
+
+  responses:
+    Erro:
+      description: Erro
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Erro'
+
   schemas:
+    Erro:
+      type: object
+      properties:
+        erro:
+          type: string
+          example: Dados inválidos
+        detalhes:
+          type: object
+          additionalProperties:
+            type: string
+
+    Categoria:
+      type: string
+      enum:
+        - Hortícolas
+        - Fruta
+        - Mel
+        - Vinho
+        - Queijo
+        - Padaria
+        - Outros
+
     ProductInput:
       type: object
       required: [nome, categoria, preco]
       properties:
-        nome: { type: string, example: Kiwi Hayward }
-        categoria: { type: string, enum: [Hortícolas, Fruta, Mel, Vinho, Queijo, Padaria, Outros] }
-        preco: { type: number, example: 2.4 }
-        unidade: { type: string, example: kg }
-        stock: { type: integer, example: 300 }
-        biologico: { type: boolean }
-        epocas: { type: array, items: { type: string } }
+        nome:
+          type: string
+          example: Kiwi Hayward
+        descricao:
+          type: string
+        categoria:
+          $ref: '#/components/schemas/Categoria'
+        preco:
+          type: number
+          minimum: 0
+          example: 2.4
+        unidade:
+          type: string
+          example: kg
+        stock:
+          type: integer
+          minimum: 0
+          example: 300
+        biologico:
+          type: boolean
+          example: true
+        epocas:
+          type: array
+          items:
+            type: string
+            enum: [Primavera, Verão, Outono, Inverno]
+
+    ProductUpdate:
+      type: object
+      properties:
+        nome:
+          type: string
+        descricao:
+          type: string
+        categoria:
+          $ref: '#/components/schemas/Categoria'
+        preco:
+          type: number
+          minimum: 0
+        unidade:
+          type: string
+        stock:
+          type: integer
+          minimum: 0
+        biologico:
+          type: boolean
+        epocas:
+          type: array
+          items:
+            type: string
+            enum: [Primavera, Verão, Outono, Inverno]
+
     Product:
       allOf:
         - $ref: '#/components/schemas/ProductInput'
         - type: object
           properties:
-            _id: { type: string }
-            produtor: { type: string, description: Id do produtor (ou objeto com populate) }
-            imagemUrl: { type: string }
-    # TODO: User, Order, Auction, Bid, Review, Erro
+            _id:
+              type: string
+            produtor:
+              oneOf:
+                - type: string
+                - $ref: '#/components/schemas/Producer'
+              description: Identificador do produtor ou objeto populado com os seus dados
+            imagemUrl:
+              type: string
+              nullable: true
+
+    Producer:
+      type: object
+      properties:
+        _id:
+          type: string
+        nome:
+          type: string
+          example: Horta da Ribeira
+        produtor:
+          type: object
+          properties:
+            nomeExploracao:
+              type: string
+              example: Horta da Ribeira
+            descricao:
+              type: string
+            localidade:
+              type: string
+              example: Ponte de Lima
+            localizacao:
+              type: object
+              properties:
+                lat:
+                  type: number
+                lng:
+                  type: number
+            validado:
+              type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    OrderStatus:
+      type: string
+      enum:
+        - pendente
+        - confirmada
+        - pronta
+        - entregue
+
+    OrderInput:
+      type: object
+      required: [linhas]
+      properties:
+        linhas:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [produto, quantidade]
+            properties:
+              produto:
+                type: string
+                example: 66f5a1c2e4b0a1b2c3d4e5f6
+              quantidade:
+                type: integer
+                minimum: 1
+                example: 2
+        entrega:
+          type: object
+          properties:
+            tipo:
+              type: string
+              enum: [levantamento, entrega]
+              default: levantamento
+            morada:
+              type: string
+
+    Order:
+      type: object
+      properties:
+        _id:
+          type: string
+        comprador:
+          oneOf:
+            - type: string
+            - type: object
+          description: Identificador ou objeto populado do comprador
+        produtor:
+          oneOf:
+            - type: string
+            - $ref: '#/components/schemas/Producer'
+          description: Identificador ou objeto populado do produtor
+        linhas:
+          type: array
+          items:
+            type: object
+            properties:
+              produto:
+                type: string
+              nome:
+                type: string
+              precoUnit:
+                type: number
+              unidade:
+                type: string
+              quantidade:
+                type: integer
+        estado:
+          $ref: '#/components/schemas/OrderStatus'
+        entrega:
+          type: object
+          properties:
+            tipo:
+              type: string
+              enum: [levantamento, entrega]
+            morada:
+              type: string
+        origem:
+          type: string
+          enum: [loja, leilao]
+        leilao:
+          type: string
+          nullable: true
+        total:
+          type: number
+          description: Total calculado pelo virtual do modelo
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    AuctionStatus:
+      type: string
+      enum:
+        - agendado
+        - ativo
+        - terminado
+
+    AuctionInput:
+      type: object
+      required:
+        - lote
+        - precoBase
+        - incremento
+        - iniciaEm
+        - duracaoMin
+
+      properties:
+        produto:
+          type: string
+
+        lote:
+          type: string
+          example: 200 kg de kiwi Hayward, calibre A
+
+        quantidade:
+          type: string
+          example: 200 kg
+
+        precoBase:
+          type: number
+          minimum: 0
+          example: 200
+
+        incremento:
+          type: number
+          minimum: 0.01
+          example: 5
+
+        iniciaEm:
+          type: string
+          format: date-time
+
+        duracaoMin:
+          type: number
+          minimum: 0
+          exclusiveMinimum: true
+          example: 30
+
+    Auction:
+      type: object
+      properties:
+        _id:
+          type: string
+
+        produtor:
+          oneOf:
+            - type: string
+            - $ref: '#/components/schemas/Producer'
+
+        produto:
+          oneOf:
+            - type: string
+              nullable: true
+            - $ref: '#/components/schemas/Product'
+
+        lote:
+          type: string
+
+        descricao:
+          type: string
+
+        quantidade:
+          type: string
+
+        precoBase:
+          type: number
+
+        incremento:
+          type: number
+
+        licitacaoAtual:
+          type: object
+          properties:
+            valor:
+              type: number
+
+            comprador:
+              type: string
+              nullable: true
+
+            nome:
+              type: string
+              nullable: true
+
+            em:
+              type: string
+              format: date-time
+              nullable: true
+
+        numLicitacoes:
+          type: integer
+
+        iniciaEm:
+          type: string
+          format: date-time
+
+        terminaEm:
+          type: string
+          format: date-time
+
+        estado:
+          $ref: '#/components/schemas/AuctionStatus'
+
+        encomenda:
+          type: string
+          nullable: true
+
+        createdAt:
+          type: string
+          format: date-time
+
+        updatedAt:
+          type: string
+          format: date-time
+
+    Bid:
+      type: object
+      properties:
+        _id:
+          type: string
+
+        leilao:
+          type: string
+
+        comprador:
+          oneOf:
+            - type: string
+            - type: object
+
+        nome:
+          type: string
+
+        valor:
+          type: number
+
+        createdAt:
+          type: string
+          format: date-time
+
+        updatedAt:
+          type: string
+          format: date-time
+
+    ReviewInput:
+      type: object
+      required:
+        - encomenda
+        - classificacao
+
+      properties:
+        encomenda:
+          type: string
+
+        produto:
+          type: string
+          nullable: true
+
+        classificacao:
+          type: integer
+          minimum: 1
+          maximum: 5
+          example: 5
+
+        comentario:
+          type: string
+          example: Produto muito bom
+
+    Review:
+      type: object
+      properties:
+        _id:
+          type: string
+
+        autor:
+          oneOf:
+            - type: string
+            - type: object
+
+        produtor:
+          oneOf:
+            - type: string
+            - $ref: '#/components/schemas/Producer'
+
+        produto:
+          oneOf:
+            - type: string
+              nullable: true
+            - $ref: '#/components/schemas/Product'
+
+        encomenda:
+          type: string
+
+        classificacao:
+          type: integer
+          minimum: 1
+          maximum: 5
+
+        comentario:
+          type: string
+
+        denuncias:
+          type: integer
+
+        visivel:
+          type: boolean
+
+        createdAt:
+          type: string
+          format: date-time
+
+        updatedAt:
+          type: string
+          format: date-time
+
+    UserRole:
+      type: string
+      enum:
+        - comprador
+        - produtor
+        - admin
+
+    User:
+      type: object
+      properties:
+        _id:
+          type: string
+
+        nome:
+          type: string
+          example: João Silva
+
+        email:
+          type: string
+          format: email
+          example: joao@exemplo.pt
+
+        papel:
+          $ref: '#/components/schemas/UserRole'
+
+        produtor:
+          type: object
+          nullable: true
+          properties:
+            nomeExploracao:
+              type: string
+
+            descricao:
+              type: string
+
+            localidade:
+              type: string
+
+            validado:
+              type: boolean
+
+        createdAt:
+          type: string
+          format: date-time
+
+    RegisterInput:
+      type: object
+      required:
+        - nome
+        - email
+        - password
+        - papel
+
+      properties:
+        nome:
+          type: string
+          example: João Silva
+
+        email:
+          type: string
+          format: email
+          example: joao@exemplo.pt
+
+        password:
+          type: string
+          format: password
+          minLength: 8
+          example: password123
+
+        papel:
+          type: string
+          enum:
+            - comprador
+            - produtor
+
+        produtor:
+          type: object
+          properties:
+            nomeExploracao:
+              type: string
+
+            descricao:
+              type: string
+
+            localidade:
+              type: string
+
+    LoginInput:
+      type: object
+      required:
+        - email
+        - password
+
+      properties:
+        email:
+          type: string
+          format: email
+          example: tasca@exemplo.pt
+
+        password:
+          type: string
+          format: password
+          example: password123
+
+    Session:
+      type: object
+      properties:
+        token:
+          type: string
+          description: JWT utilizado nas rotas protegidas
+
+        utilizador:
+          $ref: '#/components/schemas/User'
+
+    AdminStats:
+      type: object
+      properties:
+        utilizadores:
+          type: integer
+          example: 4
+
+        produtores:
+          type: integer
+          example: 2
+
+        encomendasHoje:
+          type: integer
+          example: 1
+
+        leiloesAtivos:
+          type: integer
+          example: 1

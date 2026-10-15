@@ -18,7 +18,6 @@ async function reporStock(reservas) {
 }
 
 // POST /api/orders  (comprador)  -> 201
-// TODO: copiar nome e preço de cada produto para as linhas e validar o stock
 router.post(
   '/',
   auth('comprador'),
@@ -80,6 +79,7 @@ router.post(
           produto: produto._id,
           nome: produto.nome,
           precoUnit: produto.preco,
+          unidade: produto.unidade,
           quantidade
         });
       }
