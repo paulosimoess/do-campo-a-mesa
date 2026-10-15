@@ -1,7 +1,7 @@
 const { Schema, model, Types } = require('mongoose');
 
 const productSchema = new Schema({
-  produtor: { type: Types.ObjectId, ref: 'User', required: true },
+  produtor: { type: Types.ObjectId, ref: 'User', required: true, index: true },
   nome: { type: String, required: true, trim: true },
   categoria: {
     type: String,
@@ -19,5 +19,7 @@ const productSchema = new Schema({
 
 // TODO (Passo 4): criar índices adequados às pesquisas, p. ex.:
 // productSchema.index({ nome: 'text' });
+productSchema.index({ nome: 'text' });
+productSchema.index({ categoria: 1, biologico: 1, preco: 1 });
 
 module.exports = model('Product', productSchema);
