@@ -4,9 +4,9 @@ const { Schema, model, Types } = require('mongoose');
 
 const reviewSchema = new Schema({
   autor: { type: Types.ObjectId, ref: 'User', required: true },
-  produtor: { type: Types.ObjectId, ref: 'User', required: true },
-  produto: { type: Types.ObjectId, ref: 'Product' },
-  encomenda: { type: Types.ObjectId, ref: 'Order' },
+  produtor: { type: Types.ObjectId, ref: 'User', required: true, index: true },
+  produto: { type: Types.ObjectId, ref: 'Product', index: true },
+  encomenda: { type: Types.ObjectId, ref: 'Order', index: true },
   classificacao: { type: Number, min: 1, max: 5, required: true },
   comentario: String,
   denuncias: { type: Number, default: 0 },
