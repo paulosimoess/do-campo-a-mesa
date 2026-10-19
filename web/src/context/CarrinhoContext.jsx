@@ -1,4 +1,3 @@
-// Estado global do carrinho
 import {
   createContext,
   useContext,
@@ -7,31 +6,72 @@ import {
   useState
 } from 'react';
 
+import { useAuth } from './AuthContext.jsx';
+
 const CarrinhoContext = createContext(null);
 
-function lerCarrinho() {
+function lerCarrinho(chave) {
+  if (!chave) {
+    return [];
+  }
+
   try {
-    const guardado = localStorage.getItem('carrinho');
+    const guardado = localStorage.getItem(chave);
     return guardado ? JSON.parse(guardado) : [];
   } catch {
     return [];
   }
 }
 
+function guardarCarrinho(chave, linhas) {
+  if (!chave) {
+    return;
+  }
+
+  try {
+    localStorage.setItem(
+      chave,
+      JSON.stringify(linhas)
+    );
+  } catch {
+    // Se o armazenamento não estiver disponível,
+    // o carrinho continua a funcionar apenas em memória.
+  }
+}
+
 export function CarrinhoProvider({ children }) {
-  const [linhas, setLinhas] = useState(lerCarrinho);
+  const { utilizador } = useAuth();
+
+  const chaveCarrinho = utilizador?.id
+    ? `carrinho:${utilizador.id}`
+    : null;
+
+  const [linhas, setLinhas] = useState([]);
 
   useEffect(() => {
-    try {
-      localStorage.setItem('carrinho', JSON.stringify(linhas));
-    } catch {
-      // Se o armazenamento não estiver disponível,
-      // o carrinho continua a funcionar apenas em memória.
-    }
-  }, [linhas]);
+    setLinhas(
+      lerCarrinho(chaveCarrinho)
+    );
+  }, [chaveCarrinho]);
+
+  function atualizarLinhas(atualizacao) {
+    setLinhas((atual) => {
+      const novasLinhas =
+        typeof atualizacao === 'function'
+          ? atualizacao(atual)
+          : atualizacao;
+
+      guardarCarrinho(
+        chaveCarrinho,
+        novasLinhas
+      );
+
+      return novasLinhas;
+    });
+  }
 
   function adicionar(produto, quantidade = 1) {
-    setLinhas((atual) => {
+    atualizarLinhas((atual) => {
       const existe = atual.find(
         (l) => l.produto._id === produto._id
       );
@@ -41,25 +81,36 @@ export function CarrinhoProvider({ children }) {
           l.produto._id === produto._id
             ? {
                 ...l,
-                quantidade: l.quantidade + quantidade
+                quantidade:
+                  l.quantidade + quantidade
               }
             : l
         );
       }
 
-      return [...atual, { produto, quantidade }];
+      return [
+        ...atual,
+        {
+          produto,
+          quantidade
+        }
+      ];
     });
   }
 
   function alterarQuantidade(produtoId, quantidade) {
-    setLinhas((atual) =>
+    atualizarLinhas((atual) =>
       quantidade < 1
         ? atual.filter(
-            (l) => l.produto._id !== produtoId
+            (l) =>
+              l.produto._id !== produtoId
           )
         : atual.map((l) =>
             l.produto._id === produtoId
-              ? { ...l, quantidade }
+              ? {
+                  ...l,
+                  quantidade
+                }
               : l
           )
     );
@@ -70,7 +121,7 @@ export function CarrinhoProvider({ children }) {
   }
 
   function esvaziar() {
-    setLinhas([]);
+    atualizarLinhas([]);
   }
 
   const total = useMemo(
@@ -78,7 +129,8 @@ export function CarrinhoProvider({ children }) {
       linhas.reduce(
         (soma, linha) =>
           soma +
-          linha.produto.preco * linha.quantidade,
+          linha.produto.preco *
+            linha.quantidade,
         0
       ),
     [linhas]

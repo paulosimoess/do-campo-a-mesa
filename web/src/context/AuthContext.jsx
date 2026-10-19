@@ -1,5 +1,6 @@
 // Estado global da sessão (utilizador + token)
-import { createContext, useContext, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import {api} from '../api/client.js';
 
 const AuthContext = createContext(null);
 
@@ -8,76 +9,70 @@ export function AuthProvider({ children }) {
     try { return JSON.parse(localStorage.getItem('sessao')) || null; } catch { return null; }
   });
 
-  async function entrar(email, password) {
-    const utilizadoresSimulados = [
-      {
-        email: 'comprador@exemplo.pt',
-        password: 'password123',
-        utilizador: {
-          id: 'comprador-1',
-          nome: 'Comprador Teste',
-          email: 'comprador@exemplo.pt',
-          papel: 'comprador'
-        }
-      },
-      {
-        email: 'produtor@exemplo.pt',
-        password: 'password123',
-        utilizador: {
-          id: 'produtor-1',
-          nome: 'Produtor Teste',
-          email: 'produtor@exemplo.pt',
-          papel: 'produtor'
-        }
-      },
-      {
-        email: 'admin@exemplo.pt',
-        password: 'password123',
-        utilizador: {
-          id: 'admin-1',
-          nome: 'Administrador',
-          email: 'admin@exemplo.pt',
-          papel: 'admin'
-        }
-      }
-    ];
-
-    const conta = utilizadoresSimulados.find(
-      (u) =>
-        u.email === email.trim().toLowerCase() &&
-        u.password === password
+  const guardarSessao = useCallback((novaSessao) => {
+    localStorage.setItem(
+      'sessao',
+      JSON.stringify(novaSessao)
     );
 
-    if (!conta) {
-      throw new Error('Credenciais inválidas');
-    }
+    setSessao(novaSessao);
+  }, []);
 
-    const novaSessao = {
-      token: 'token-simulado',
-      utilizador: conta.utilizador
-    };
-
-    guardarSessao(novaSessao);
-
-    return conta.utilizador;
-  }
-
-  function sair() {
+  const sair = useCallback(() => {
     localStorage.removeItem('sessao');
     setSessao(null);
+  }, []);
+
+  async function entrar(email, password) {
+    const dados = await api('/auth/login', {
+      metodo: 'POST',
+      corpo: {
+        email,
+        password
+      }
+    });
+
+    guardarSessao(dados);
+
+    return dados.utilizador;
   }
 
-  function guardarSessao(nova) {
-    localStorage.setItem('sessao', JSON.stringify(nova));
-    setSessao(nova);
-  }
+  const atualizar = useCallback(async () => {
+    if (!sessao?.token) {
+      return;
+    }
+
+    try {
+      const utilizador = await api('/auth/eu', {
+        token: sessao.token
+      });
+
+      guardarSessao({
+        ...sessao,
+        utilizador
+      });
+    } catch (err) {
+      if (err.status === 401) {
+        sair();
+      }
+    }
+  }, [sessao, guardarSessao, sair]);
+
+  useEffect(() => {
+    atualizar();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <AuthContext.Provider value={{
-      utilizador: sessao?.utilizador || null,
-      token: sessao?.token || null,
-      entrar, sair, guardarSessao
-    }}>
+    <AuthContext.Provider
+      value={{
+        utilizador: sessao?.utilizador || null,
+        token: sessao?.token || null,
+        entrar,
+        sair,
+        guardarSessao,
+        atualizar
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

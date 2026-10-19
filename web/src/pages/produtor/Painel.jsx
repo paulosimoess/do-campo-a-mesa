@@ -1,5 +1,8 @@
 // Produtor: painel de gestão
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext.jsx';
+import { api } from '../../api/client.js';
 
 const indicadores = [
   {
@@ -24,7 +27,66 @@ const indicadores = [
   }
 ];
 
+const euro = (valor) =>
+  Number(valor || 0).toLocaleString('pt-PT', {
+    style: 'currency',
+    currency: 'EUR'
+  });
+
 export default function PainelProdutor() {
+  const { token } = useAuth();
+
+  const [encomendas, setEncomendas] = useState([]);
+  const [erro, setErro] = useState('');
+  const [aCarregar, setACarregar] = useState(true);
+
+  useEffect(() => {
+    async function carregarEncomendas() {
+      try {
+        setErro('');
+
+        const dados = await api('/orders', {
+          token
+        });
+
+        setEncomendas(dados);
+      } catch (err) {
+        setErro(err.message);
+      } finally {
+        setACarregar(false);
+      }
+    }
+
+    carregarEncomendas();
+  }, [token]);
+
+  async function atualizarEstado(encomenda, novoEstado) {
+    try {
+      setErro('');
+
+      const atualizada = await api(
+        `/orders/${encomenda._id}/estado`,
+        {
+          metodo: 'PATCH',
+          corpo: {
+            estado: novoEstado
+          },
+          token
+        }
+      );
+
+      setEncomendas((atuais) =>
+        atuais.map((item) =>
+          item._id === atualizada._id
+            ? atualizada
+            : item
+        )
+      );
+    } catch (err) {
+      setErro(err.message);
+    }
+  }
+
   return (
     <section className="painel-produtor">
       <div className="painel-produtor__cabecalho">
@@ -70,6 +132,104 @@ export default function PainelProdutor() {
             <small>{indicador.detalhe}</small>
           </article>
         ))}
+      </div>
+
+      <div className="mt-5">
+        <h2 className="h4 mb-3">
+          Encomendas recebidas
+        </h2>
+
+        {aCarregar && (
+          <p className="texto-secundario">
+            A carregar encomendas...
+          </p>
+        )}
+
+        {erro && (
+          <div className="alert alert-danger">
+            {erro}
+          </div>
+        )}
+
+        {!aCarregar && !erro && encomendas.length === 0 && (
+          <p className="texto-secundario">
+            Ainda não existem encomendas para esta exploração.
+          </p>
+        )}
+
+        <div className="d-grid gap-3">
+          {encomendas.map((encomenda) => (
+            <article
+              key={encomenda._id}
+              className="card"
+            >
+              <div className="card-body">
+                <div className="d-flex justify-content-between gap-3">
+                  <div>
+                    <h3 className="h5">
+                      Encomenda #{encomenda._id}
+                    </h3>
+
+                    <p className="mb-1">
+                      Estado: <strong>{encomenda.estado}</strong>
+                    </p>
+
+                    <p className="mb-0">
+                      Total: <strong>{euro(encomenda.total)}</strong>
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-3 d-flex gap-2 flex-wrap">
+                  {encomenda.estado === 'pendente' && (
+                    <button
+                      type="button"
+                      className="btn btn-success btn-sm"
+                      onClick={() =>
+                        atualizarEstado(
+                          encomenda,
+                          'confirmada'
+                        )
+                      }
+                    >
+                      Confirmar
+                    </button>
+                  )}
+
+                  {encomenda.estado === 'confirmada' && (
+                    <button
+                      type="button"
+                      className="btn btn-success btn-sm"
+                      onClick={() =>
+                        atualizarEstado(
+                          encomenda,
+                          'pronta'
+                        )
+                      }
+                    >
+                      Marcar como pronta
+                    </button>
+                  )}
+
+                  {encomenda.estado === 'pronta' && (
+                    <button
+                      type="button"
+                      className="btn btn-success btn-sm"
+                      onClick={() =>
+                        atualizarEstado(
+                          encomenda,
+                          'entregue'
+                        )
+                      }
+                    >
+                      Marcar como entregue
+                    </button>
+                  )}
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
       </div>
     </section>
   );

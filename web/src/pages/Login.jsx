@@ -2,6 +2,12 @@ import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 
+const INICIO = {
+  comprador: '/',
+  produtor: '/produtor',
+  admin: '/admin'
+};
+
 export default function Login() {
   const { entrar } = useAuth();
   const navigate = useNavigate();

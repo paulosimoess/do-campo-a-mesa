@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { api } from '../api/client.js';
 
 const estadoInicial = {
   nome: '',
@@ -12,6 +14,8 @@ const estadoInicial = {
 export default function Registo() {
   const [formulario, setFormulario] = useState(estadoInicial);
   const [mensagem, setMensagem] = useState('');
+  const navigate = useNavigate();
+  const [erro, setErro] = useState('');
 
   function alterar(campo) {
     return (e) => {
@@ -22,14 +26,40 @@ export default function Registo() {
     };
   }
 
-  function submeter(e) {
+  async function submeter(e) {
     e.preventDefault();
 
-    setMensagem(
-      formulario.papel === 'produtor'
-        ? 'Registo de produtor simulado com sucesso.'
-        : 'Registo de comprador simulado com sucesso.'
-    );
+    try {
+      setErro('');
+      setMensagem('');
+
+      const corpo = {
+        nome: formulario.nome,
+        email: formulario.email,
+        password: formulario.password,
+        papel: formulario.papel
+      };
+
+      if (formulario.papel === 'produtor') {
+        corpo.produtor = {
+          nomeExploracao: formulario.exploracao,
+          localidade: formulario.localidade
+        };
+      }
+
+      await api('/auth/registo', {
+        metodo: 'POST',
+        corpo
+      });
+
+      setMensagem('Conta criada com sucesso. Já pode iniciar sessão.');
+
+      setTimeout(() => {
+        navigate('/login');
+      }, 1200);
+    } catch (err) {
+      setErro(err.message);
+    }
   }
 
   return (
@@ -178,6 +208,12 @@ export default function Registo() {
         {mensagem && (
           <div className="alert alert-success mb-0">
             {mensagem}
+          </div>
+        )}
+
+        {erro && (
+          <div className="alert alert-danger mb-0">
+            {erro}
           </div>
         )}
       </form>

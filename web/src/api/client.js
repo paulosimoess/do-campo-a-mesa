@@ -11,10 +11,18 @@ export async function api(caminho, { metodo = 'GET', corpo, token } = {}) {
     },
     body: corpo ? JSON.stringify(corpo) : undefined
   });
+
   if (resposta.status === 204) return null;
+
   const dados = await resposta.json().catch(() => null);
+
   if (!resposta.ok) {
-    throw new Error(dados?.erro || `Erro ${resposta.status}`);
+    const erro = new Error(dados?.erro || 'Erro ${resposta.status}');
+  
+    erro.status = resposta.status;
+
+    throw erro;
   }
+
   return dados;
 }

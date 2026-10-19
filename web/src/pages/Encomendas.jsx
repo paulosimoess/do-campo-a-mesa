@@ -1,30 +1,70 @@
-import EstadoEncomenda from '../components/EstadoEncomenda.jsx';
+import { useEffect, useState } from 'react';
 
-const encomendasSimuladas = [
-  {
-    id: 'DCM-1024',
-    produtor: 'Horta da Ribeira',
-    data: '08/10/2026',
-    total: '38,50 €',
-    estado: 'pronta'
-  },
-  {
-    id: 'DCM-1018',
-    produtor: 'Quinta da Lameira',
-    data: '04/10/2026',
-    total: '54,20 €',
-    estado: 'confirmada'
-  },
-  {
-    id: 'DCM-1007',
-    produtor: 'Souto da Serra',
-    data: '29/09/2026',
-    total: '27,80 €',
-    estado: 'entregue'
+import EstadoEncomenda from '../components/EstadoEncomenda.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
+import { api } from '../api/client.js';
+
+const euro = (valor) =>
+  Number(valor || 0).toLocaleString('pt-PT', {
+    style: 'currency',
+    currency: 'EUR'
+  });
+
+function nomeProdutor(produtor) {
+  if (!produtor) {
+    return 'Produtor';
   }
-];
+
+  if (typeof produtor === 'string') {
+    return produtor;
+  }
+
+  return (
+    produtor.produtor?.nomeExploracao ||
+    produtor.nome ||
+    'Produtor'
+  );
+}
 
 export default function Encomendas() {
+  const { token } = useAuth();
+
+  const [encomendas, setEncomendas] = useState([]);
+  const [erro, setErro] = useState('');
+  const [aCarregar, setACarregar] = useState(true);
+
+  useEffect(() => {
+    let ativo = true;
+
+    async function carregar() {
+      try {
+        setErro('');
+
+        const dados = await api('/orders', {
+          token
+        });
+
+        if (ativo) {
+          setEncomendas(dados);
+        }
+      } catch (err) {
+        if (ativo) {
+          setErro(err.message);
+        }
+      } finally {
+        if (ativo) {
+          setACarregar(false);
+        }
+      }
+    }
+
+    carregar();
+
+    return () => {
+      ativo = false;
+    };
+  }, [token]);
+
   return (
     <section className="encomendas">
       <div className="encomendas__cabecalho">
@@ -41,28 +81,57 @@ export default function Encomendas() {
         </div>
       </div>
 
+      {aCarregar && (
+        <p className="texto-secundario">
+          A carregar encomendas...
+        </p>
+      )}
+
+      {erro && (
+        <div className="alert alert-danger">
+          {erro}
+        </div>
+      )}
+
+      {!aCarregar && !erro && encomendas.length === 0 && (
+        <p className="texto-secundario">
+          Ainda não tem encomendas.
+        </p>
+      )}
+
       <div className="encomendas__lista">
-        {encomendasSimuladas.map((encomenda) => (
+        {encomendas.map((encomenda) => (
           <article
-            key={encomenda.id}
+            key={encomenda._id}
             className="encomenda-cartao"
           >
             <div className="encomenda-cartao__topo">
               <div>
                 <p className="encomenda-cartao__numero">
-                  #{encomenda.id}
+                  #{encomenda._id}
                 </p>
 
-                <h2>{encomenda.produtor}</h2>
+                <h2>
+                  {nomeProdutor(encomenda.produtor)}
+                </h2>
               </div>
 
               <div className="encomenda-cartao__resumo">
-                <span>{encomenda.data}</span>
-                <strong>{encomenda.total}</strong>
+                <span>
+                  {new Date(
+                    encomenda.createdAt
+                  ).toLocaleDateString('pt-PT')}
+                </span>
+
+                <strong>
+                  {euro(encomenda.total)}
+                </strong>
               </div>
             </div>
 
-            <EstadoEncomenda estado={encomenda.estado} />
+            <EstadoEncomenda
+              estado={encomenda.estado}
+            />
 
             {encomenda.estado === 'entregue' && (
               <div className="encomenda-cartao__acoes">
@@ -79,4 +148,4 @@ export default function Encomendas() {
       </div>
     </section>
   );
-}
+} 
