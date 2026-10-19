@@ -563,9 +563,6 @@ paths:
         '409':
           $ref: '#/components/responses/Erro'
 
-        '501':
-          description: Endpoint ainda não implementado no Passo 5
-
   /auth/login:
     post:
       tags: [Autenticação]
@@ -592,9 +589,6 @@ paths:
         '401':
           $ref: '#/components/responses/Erro'
 
-        '501':
-          description: Endpoint ainda não implementado no Passo 5
-
   /auth/eu:
     get:
       tags: [Autenticação]
@@ -612,9 +606,6 @@ paths:
 
         '401':
           $ref: '#/components/responses/Erro'
-
-        '501':
-          description: Endpoint ainda não implementado no Passo 5
 
   /admin/estatisticas:
     get:
@@ -824,9 +815,6 @@ paths:
 
         '404':
           $ref: '#/components/responses/Erro'
-
-        '501':
-          description: Endpoint ainda não implementado
 
 components:
   securitySchemes:

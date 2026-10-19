@@ -116,7 +116,10 @@ router.patch(
 
     const avaliacao = await Review.findByIdAndUpdate(
       req.params.id,
-      { visivel },
+      { 
+        visivel, 
+        denuncias: 0 
+      },
       {
         new: true,
         runValidators: true
