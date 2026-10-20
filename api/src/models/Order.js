@@ -37,4 +37,12 @@ orderSchema.virtual('total').get(function total() {
 
 orderSchema.statics.ESTADOS = ESTADOS;
 
+orderSchema.index(
+  { leilao: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { origem: 'leilao' }
+  }
+);
+
 module.exports = model('Order', orderSchema);
