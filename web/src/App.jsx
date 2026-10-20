@@ -1,4 +1,3 @@
-// Passo 2: routing no cliente
 import { Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar.jsx';
 import RotaProtegida from './components/RotaProtegida.jsx';
@@ -15,24 +14,23 @@ import ProdutosProdutor from './pages/produtor/ProdutosProdutor.jsx';
 import NovoLeilao from './pages/produtor/NovoLeilao.jsx';
 import PainelAdmin from './pages/admin/Painel.jsx';
 import NaoEncontrado from './pages/NaoEncontrado.jsx';
+import Notificacoes from './components/Notificacoes.jsx';
 
 export default function App() {
   return (
     <>
       <Navbar />
+      <Notificacoes />
+
       <main className="container-xl py-4">
         <Routes>
-          {/* Visitante */}
+          {/* Rotas públicas */}
           <Route path="/" element={<Catalogo />} />
           <Route path="/produtores/:id" element={<Produtor />} />
           <Route path="/leiloes" element={<Leiloes />} />
+          <Route path="/leiloes/:id" element={<SalaLeilao />} />
           <Route path="/login" element={<Login />} />
           <Route path="/registo" element={<Registo />} />
-
-          {/* Qualquer utilizador autenticado */}
-          <Route element={<RotaProtegida />}>
-            <Route path="/leiloes/:id" element={<SalaLeilao />} />
-          </Route>
 
           {/* Comprador */}
           <Route element={<RotaProtegida papeis={['comprador']} />}>
