@@ -43,7 +43,7 @@ export default function Notificacoes() {
                   removerNotificacao(notificacao.id)
                 }
               >
-                Ver encomendas
+                Ver encomenda
               </Link>
             </div>
 

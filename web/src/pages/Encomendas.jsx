@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react';
 import EstadoEncomenda from '../components/EstadoEncomenda.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { api } from '../api/client.js';
+import { useSocket } from '../context/SocketContext.jsx';
+import { useSearchParams } from 'react-router-dom';
 
 const euro = (valor) =>
   Number(valor || 0).toLocaleString('pt-PT', {
@@ -28,10 +30,14 @@ function nomeProdutor(produtor) {
 
 export default function Encomendas() {
   const { token } = useAuth();
+  const socket = useSocket();
 
   const [encomendas, setEncomendas] = useState([]);
   const [erro, setErro] = useState('');
   const [aCarregar, setACarregar] = useState(true);
+
+  const [searchParams] = useSearchParams();
+  const encomendaSelecionada = searchParams.get('encomenda');
 
   useEffect(() => {
     let ativo = true;
@@ -64,6 +70,39 @@ export default function Encomendas() {
       ativo = false;
     };
   }, [token]);
+
+  useEffect(() => {
+    if (!socket) return undefined;
+
+    function onEncomendaAtualizada({ id, estado }) {
+      setEncomendas((anteriores) =>
+        anteriores.map((encomenda) =>
+          String(encomenda._id) === String(id)
+            ? { ...encomenda, estado }
+            : encomenda
+        )
+      );
+    }
+
+    socket.on('encomenda-atualizada', onEncomendaAtualizada);
+
+    return () => {
+      socket.off('encomenda-atualizada', onEncomendaAtualizada);
+    };
+  }, [socket]);
+
+  useEffect(() => {
+    if (aCarregar || !encomendaSelecionada) return;
+
+    const elemento = document.getElementById(
+      `encomenda-${encomendaSelecionada}`
+    );
+
+    elemento?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center'
+    });
+  }, [aCarregar, encomendaSelecionada, encomendas.length]);
 
   return (
     <section className="encomendas">
@@ -103,7 +142,12 @@ export default function Encomendas() {
         {encomendas.map((encomenda) => (
           <article
             key={encomenda._id}
-            className="encomenda-cartao"
+            id={`encomenda-${encomenda._id}`}
+            className={`encomenda-cartao ${
+              String(encomenda._id) === encomendaSelecionada
+                ? 'border border-success'
+                : ''
+            }`}
           >
             <div className="encomenda-cartao__topo">
               <div>

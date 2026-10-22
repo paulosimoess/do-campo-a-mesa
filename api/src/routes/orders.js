@@ -153,9 +153,6 @@ router.get(
 );
 
 // PATCH /api/orders/:id/estado  (produtor)  -> 200
-// TODO (Passo 7): depois de gravar, notificar o comprador em tempo real:
-//   req.app.get('io').to(`user:${encomenda.comprador}`)
-//     .emit('encomenda-atualizada', { id: encomenda._id, estado: encomenda.estado });
 router.patch(
   '/:id/estado',
   auth('produtor'),
@@ -197,6 +194,18 @@ router.patch(
         existe
           ? 'O estado só pode avançar'
           : 'Encomenda não encontrada'
+      );
+    }
+
+    const io = req.app.get('io');
+
+    if (io) {
+      io.to(`user:${encomenda.comprador.toString()}`).emit(
+        'encomenda-atualizada',
+        {
+          id: String(encomenda._id),
+          estado: encomenda.estado
+        }
       );
     }
 
