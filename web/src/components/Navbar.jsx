@@ -32,6 +32,12 @@ export default function Navbar() {
           <ul className="navbar-nav me-auto navegacao-principal">
             <li className="nav-item">
               <NavLink to="/" end className="nav-link">
+                Início
+              </NavLink>
+            </li>
+
+            <li className="nav-item">
+              <NavLink to="/produtos" className="nav-link">
                 Produtos
               </NavLink>
             </li>

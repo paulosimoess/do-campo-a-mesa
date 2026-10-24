@@ -1,12 +1,10 @@
 // Visitante: catálogo com pesquisa e filtros
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import CartaoProduto from '../components/CartaoProduto.jsx';
 import { useCarrinho } from '../context/CarrinhoContext.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { api, USAR_DADOS_SIMULADOS } from '../api/client.js';
 import produtosSimulados from '../data/produtos.json';
-import CartaoLeilaoDestaque from '../components/CartaoLeilaoDestaque.jsx';
 
 const CATEGORIAS = ['Todos', 'Hortícolas', 'Fruta', 'Mel', 'Vinho', 'Queijo', 'Padaria'];
 
@@ -53,33 +51,6 @@ export default function Catalogo() {
 
   return (
     <>
-      <section className="destaque">
-        <div className="destaque__conteudo">
-          <p className="destaque__etiqueta">
-            PRODUTORES LOCAIS · ALTO MINHO
-          </p>
-
-          <h1>Direto de quem produz, para a sua mesa.</h1>
-
-          <p className="destaque__descricao">
-            Descubra produtos locais, conheça quem os produz e acompanhe
-            lotes sazonais em leilão, tudo num só lugar.
-          </p>
-
-          <div className="destaque__acoes">
-            <a href="#produtos" className="btn btn-success">
-              Explorar produtos
-            </a>
-
-            <Link to="/leiloes" className="btn btn-outline-secondary">
-              Ver leilões
-            </Link>
-          </div>
-        </div>
-
-        <CartaoLeilaoDestaque />
-      </section>
-
       <section
         id="produtos"
         className="seccao-produtos"

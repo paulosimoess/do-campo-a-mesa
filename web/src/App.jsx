@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar.jsx';
 import RotaProtegida from './components/RotaProtegida.jsx';
+import Inicio from './pages/Inicio.jsx';
 import Catalogo from './pages/Catalogo.jsx';
 import Produtor from './pages/Produtor.jsx';
 import Leiloes from './pages/Leiloes.jsx';
@@ -25,7 +26,8 @@ export default function App() {
       <main className="container-xl py-4">
         <Routes>
           {/* Rotas públicas */}
-          <Route path="/" element={<Catalogo />} />
+          <Route path="/" element={<Inicio />} />
+          <Route path="/produtos" element={<Catalogo />} />
           <Route path="/produtores/:id" element={<Produtor />} />
           <Route path="/leiloes" element={<Leiloes />} />
           <Route path="/leiloes/:id" element={<SalaLeilao />} />
