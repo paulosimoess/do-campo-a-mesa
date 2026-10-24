@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-
 import { useAuth } from '../../context/AuthContext.jsx';
 import { api } from '../../api/client.js';
+import ImagemProduto from '../../components/ImagemProduto.jsx';
 
 const estadoInicial = {
   nome: '',
@@ -147,7 +147,21 @@ export default function ProdutosProdutor() {
     setMostrarFormulario(true);
   }
 
+  function atualizarImagemProduto(produtoId, imagemUrl) {
+    setProdutos((atuais) =>
+      atuais.map((produto) =>
+        produto._id === produtoId
+          ? { ...produto, imagemUrl }
+          : produto
+      )
+    );
 
+    setProdutoEmEdicao((atual) =>
+      atual?._id === produtoId
+        ? { ...atual, imagemUrl }
+        : atual
+    );
+  }
 
   return (
     <section className="produtos-produtor">
@@ -313,6 +327,21 @@ export default function ProdutosProdutor() {
               onChange={alterar('stock')}
             />
           </div>
+
+          {produtoEmEdicao && (
+            <div className="mb-4">
+              <ImagemProduto
+                produto={produtoEmEdicao}
+                token={token}
+                onImagemAtualizada={(imagemUrl) =>
+                  atualizarImagemProduto(
+                    produtoEmEdicao._id,
+                    imagemUrl
+                  )
+                }
+              />
+            </div>
+          )}
 
           <button
             type="submit"

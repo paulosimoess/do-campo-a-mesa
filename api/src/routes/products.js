@@ -1,9 +1,8 @@
-// Passo 3: recurso /api/products
 const router = require('express').Router();
 const multer = require('multer');
 const Product = require('../models/Product');
 const auth = require('../middleware/auth');
-const porFazer = require('./_naoImplementado');
+const { guardarImagem, removerImagemLocal } = require('../services/imagens');
 const a = require('../utils/async');
 const erro = require('../utils/erro');
 
@@ -170,8 +169,47 @@ router.delete(
   })
 );
 
-// POST /api/products/:id/imagem  (multipart, campo "imagem")  -> 200 { imagemUrl }
-// TODO (Passo 8): usar services/imagens.js para enviar req.file para o storage da Cloud
-router.post('/:id/imagem', auth('produtor'), upload.single('imagem'), porFazer('Upload da imagem do produto'));
+
+ // POST /api/products/:id/imagem
+router.post(
+  '/:id/imagem',
+  auth('produtor'),
+  upload.single('imagem'),
+  a(async (req, res) => {
+    const produto = await Product.findOne({
+      _id: req.params.id,
+      produtor: req.user.id
+    });
+
+    if (!produto) {
+      throw erro(404, 'Produto não encontrado');
+    }
+
+    if (!req.file) {
+      throw erro(400, 'Selecione uma imagem');
+    }
+
+    const imagemAnterior = produto.imagemUrl;
+
+    const imagemUrl = await guardarImagem(req.file);
+
+    produto.imagemUrl = imagemUrl;
+    await produto.save();
+
+    if (imagemAnterior && imagemAnterior !== imagemUrl) {
+      try {
+        await removerImagemLocal(imagemAnterior);
+      } catch (err) {
+        console.warn(
+          'Não foi possível remover a imagem anterior:',
+          err.message
+        );
+      }
+    }
+
+    res.json({ imagemUrl });
+  })
+);
+
 
 module.exports = router;

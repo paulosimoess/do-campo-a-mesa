@@ -26,6 +26,12 @@ module.exports = (err, req, res, next) => { // eslint-disable-line no-unused-var
   }
 
   if (err.name === 'MulterError') {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(413).json({
+        erro: 'A imagem não pode ultrapassar 5 MB'
+      });
+    }
+
     return res.status(400).json({
       erro: err.message
     });

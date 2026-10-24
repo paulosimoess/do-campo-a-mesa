@@ -11,6 +11,18 @@ const app = express();
 app.use(cors({ origin: process.env.CLIENT_URL || '*' }));
 app.use(express.json());
 
+// Disponibilizar as imagens guardadas localmente.
+app.use(
+  '/uploads',
+  express.static(
+    path.join(__dirname, '..', 'uploads'),
+    {
+      index: false,
+      dotfiles: 'deny'
+    }
+  )
+);
+
 // Passo 5: documentação OpenAPI em /api-docs
 const openapi = YAML.load(path.join(__dirname, '..', 'openapi.yaml'));
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openapi));

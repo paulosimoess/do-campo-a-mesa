@@ -1,6 +1,3 @@
-# Especificação OpenAPI da API Do Campo à Mesa.
-# Passo 5 - Documentação Swagger/OpenAPI.
-
 openapi: 3.0.3
 
 info:
@@ -783,8 +780,10 @@ paths:
       tags: [Produtos]
       summary: Carregar imagem de um produto
       description: >
-        Permite ao produtor proprietário associar uma imagem ao produto.
-        Este endpoint será implementado no passo de armazenamento/cloud.
+        Permite ao produtor proprietário carregar ou substituir a imagem
+        de um produto. São aceites imagens JPEG, PNG e WebP até 5 MB.
+        Em desenvolvimento, a imagem é guardada localmente.
+        Em produção, pode ser armazenada no Azure Blob Storage.
       security:
         - bearerAuth: []
 
@@ -802,7 +801,17 @@ paths:
 
       responses:
         '200':
-          description: Imagem associada ao produto
+          description: Imagem carregada e associada ao produto com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [imagemUrl]
+                properties:
+                  imagemUrl:
+                    type: string
+                    description: Caminho local ou URL público da imagem
+                    example: /uploads/1792831772759-d22a03c40595d09e37c6a077.jpg
 
         '400':
           $ref: '#/components/responses/Erro'
@@ -815,6 +824,17 @@ paths:
 
         '404':
           $ref: '#/components/responses/Erro'
+
+        '413':
+          description: Imagem superior ao limite de 5 MB
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  erro:
+                    type: string
+                    example: A imagem não pode ultrapassar 5 MB
 
 components:
   securitySchemes:

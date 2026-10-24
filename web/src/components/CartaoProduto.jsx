@@ -1,4 +1,5 @@
-// Componente reutilizável: cartão de produto do catálogo
+import { API_URL } from '../api/client';
+
 const euro = (v) =>
   v.toLocaleString('pt-PT', {
     style: 'currency',
@@ -10,7 +11,7 @@ export default function CartaoProduto({ produto, onAdicionar }) {
     <article className="card cartao-produto h-100">
       {produto.imagemUrl ? (
         <img
-          src={produto.imagemUrl}
+          src={new URL(produto.imagemUrl, API_URL).href}
           className="cartao-produto__foto"
           alt={produto.nome}
           loading="lazy"
