@@ -20,9 +20,21 @@ const orderSchema = new Schema({
     tipo: { type: String, enum: ['levantamento', 'entrega'], default: 'levantamento' },
     morada: String
   },
-  origem: { type: String, enum: ['loja', 'leilao'], default: 'loja' },
-  leilao: { type: Types.ObjectId, ref: 'Auction' }
-  // TODO (Passo 4): total calculado? histórico de mudanças de estado?
+  origem: {
+    type: String,
+    enum: ['loja', 'leilao'],
+    default: 'loja'
+  },
+
+  leilao: {
+    type: Types.ObjectId,
+    ref: 'Auction'
+  },
+
+  compraId: {
+    type: Types.ObjectId,
+    index: true
+  }
 }, { timestamps: true, toJSON: { virtuals: true } });
 
 orderSchema.virtual('total').get(function total() {

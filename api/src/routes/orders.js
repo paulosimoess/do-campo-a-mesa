@@ -5,6 +5,7 @@ const Product = require('../models/Product');
 const Order = require('../models/Order');
 const a = require('../utils/async');
 const erro = require('../utils/erro');
+const { Types } = require('mongoose');
 
 async function reporStock(reservas) {
   await Promise.all(
@@ -84,8 +85,11 @@ router.post(
         });
       }
 
+      const compraId = new Types.ObjectId();
+
       const encomendas = await Order.create(
         [...porProdutor].map(([produtor, linhasProdutor]) => ({
+          compraId,
           comprador: req.user.id,
           produtor,
           linhas: linhasProdutor,
