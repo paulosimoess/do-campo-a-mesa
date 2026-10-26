@@ -13,4 +13,20 @@ const reviewSchema = new Schema({
   visivel: { type: Boolean, default: true }
 }, { timestamps: true });
 
+reviewSchema.index(
+  {
+    autor: 1,
+    encomenda: 1,
+    produto: 1
+  },
+  {
+    unique: true,
+    name: 'uniq_avaliacao_encomenda_produto',
+    partialFilterExpression: {
+      encomenda: { $exists: true }
+    }
+  }
+);
+
+
 module.exports = model('Review', reviewSchema);

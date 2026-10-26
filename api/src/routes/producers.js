@@ -52,21 +52,25 @@ router.get(
 
     const avaliacoes = await Review.find({
       produtor: produtor._id,
-      visivel: true
+      visivel: true,
+      produto: null
     }).select('classificacao');
 
+    const totalAvaliacoes = avaliacoes.length;
+
     const avaliacaoMedia =
-      avaliacoes.length > 0
+      totalAvaliacoes > 0
         ? avaliacoes.reduce(
             (soma, avaliacao) => soma + avaliacao.classificacao,
             0
-          ) / avaliacoes.length
+          ) / totalAvaliacoes
         : null;
 
     res.json({
       produtor,
       produtos,
-      avaliacaoMedia
+      avaliacaoMedia,
+      totalAvaliacoes
     });
   })
 );

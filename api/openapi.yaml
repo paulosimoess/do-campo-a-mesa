@@ -68,7 +68,19 @@ paths:
                   avaliacaoMedia:
                     type: number
                     nullable: true
-                    example: 4.5
+                    description: >
+                      Média das avaliações visíveis atribuídas ao produtor,
+                      excluindo as avaliações individuais dos produtos.
+                    example: 4.0
+
+                  totalAvaliacoes:
+                    type: integer
+                    minimum: 0
+                    description: >
+                      Número de avaliações visíveis do produtor,
+                      excluindo as avaliações individuais dos produtos.
+                    example: 2
+
         '400':
           $ref: '#/components/responses/Erro'
         '404':
@@ -467,10 +479,17 @@ paths:
 
     post:
       tags: [Avaliações]
-      summary: Criar avaliação
+      summary: Avaliar um produto ou produtor
       description: >
-        Apenas compradores podem avaliar. A encomenda tem de pertencer
-        ao comprador e estar entregue.
+        Apenas compradores podem avaliar produtos e produtores
+        de encomendas que lhes pertencem e que estejam entregues.
+        Quando o campo produto é fornecido, a avaliação refere-se
+        a esse produto, que deve pertencer à encomenda.
+        Quando o campo produto é omitido, a avaliação refere-se
+        ao produtor da encomenda.
+        É permitida uma avaliação por produto e por encomenda,
+        além de uma avaliação do produtor por encomenda.
+        As avaliações duplicadas são rejeitadas com HTTP 409.
       security:
         - bearerAuth: []
 
@@ -502,6 +521,31 @@ paths:
           $ref: '#/components/responses/Erro'
 
         '409':
+          $ref: '#/components/responses/Erro'
+
+  /reviews/minhas:
+    get:
+      tags: [Avaliações]
+      summary: Consultar as avaliações do comprador autenticado
+      description: >
+        Devolve as avaliações submetidas pelo comprador autenticado,
+        incluindo avaliações de produtos e de produtores.
+        As avaliações estão associadas às respetivas encomendas
+        e são apresentadas por ordem decrescente de criação.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de avaliações do comprador
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Review'
+        '401':
+          $ref: '#/components/responses/Erro'
+        '403':
           $ref: '#/components/responses/Erro'
 
   /reviews/{id}/denuncia:

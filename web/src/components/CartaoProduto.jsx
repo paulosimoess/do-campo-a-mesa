@@ -1,4 +1,5 @@
 import { API_URL } from '../api/client';
+import { Link } from 'react-router-dom';
 
 const euro = (v) =>
   v.toLocaleString('pt-PT', {
@@ -36,7 +37,21 @@ export default function CartaoProduto({ produto, onAdicionar }) {
         </h3>
 
         <p className="cartao-produto__produtor">
-          {produto.produtor?.nome}
+          {produto.produtor?._id ? (
+            <Link
+              to={`/produtores/${produto.produtor._id}`}
+              className="text-reset text-decoration-underline"
+            >
+              {produto.produtor.produtor?.nomeExploracao ||
+                produto.produtor.nome ||
+                'Produtor'}
+            </Link>
+          ) : (
+            produto.produtor?.produtor?.nomeExploracao ||
+            produto.produtor?.nome ||
+            'Produtor'
+          )}
+
           {produto.produtor?.produtor?.localidade &&
             ` · ${produto.produtor.produtor.localidade}`}
         </p>

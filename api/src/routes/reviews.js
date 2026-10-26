@@ -5,7 +5,8 @@ const Order = require('../models/Order');
 const a = require('../utils/async');
 const erro = require('../utils/erro');
 
-// POST /api/reviews  (comprador, só após encomenda entregue)  -> 201
+
+// POST /api/reviews
 router.post(
   '/',
   auth('comprador'),
@@ -17,9 +18,25 @@ router.post(
       comentario
     } = req.body;
 
-    if (!encomenda || classificacao == null) {
-      throw erro(400, 'Dados da avaliação incompletos');
+    if (
+      !encomenda ||
+      !Number.isInteger(classificacao) ||
+      classificacao < 1 ||
+      classificacao > 5
+    ) {
+      throw erro(400, 'Dados da avaliação inválidos');
     }
+
+    if (
+      produto != null &&
+      (typeof produto !== 'string' || !produto.trim())
+    ) {
+      throw erro(400, 'Produto inválido');
+    }
+
+    const produtoId = produto == null
+      ? null
+      : produto.trim();
 
     const order = await Order.findOne({
       _id: encomenda,
@@ -37,9 +54,10 @@ router.post(
       );
     }
 
-    if (produto) {
+    if (produtoId) {
       const pertence = order.linhas.some(
-        (linha) => linha.produto?.toString() === produto
+        (linha) =>
+          String(linha.produto) === produtoId
       );
 
       if (!pertence) {
@@ -52,28 +70,52 @@ router.post(
 
     const existente = await Review.exists({
       autor: req.user.id,
-      encomenda
+      encomenda: order._id,
+      produto: produtoId
     });
 
     if (existente) {
       throw erro(
         409,
-        'Esta encomenda já foi avaliada'
+        produtoId
+          ? 'Este produto já foi avaliado nesta encomenda'
+          : 'Este produtor já foi avaliado nesta encomenda'
       );
     }
 
     const avaliacao = await Review.create({
       autor: req.user.id,
       produtor: order.produtor,
-      produto,
-      encomenda,
+      encomenda: order._id,
+      ...(produtoId ? { produto: produtoId } : {}),
       classificacao,
-      comentario
+      comentario:
+        typeof comentario === 'string'
+          ? comentario.trim()
+          : ''
     });
 
     res.status(201).json(avaliacao);
   })
 );
+
+
+// GET /api/reviews/minhas
+router.get(
+  '/minhas',
+  auth('comprador'),
+  a(async (req, res) => {
+    const avaliacoes = await Review.find({
+      autor: req.user.id,
+      encomenda: { $exists: true }
+    })
+      .select('encomenda produtor produto classificacao comentario createdAt')
+      .sort({ createdAt: -1 });
+
+    res.json(avaliacoes);
+  })
+);
+
 
 // GET /api/reviews?produtor=&produto=  -> 200 [avaliações visíveis]
 router.get(
