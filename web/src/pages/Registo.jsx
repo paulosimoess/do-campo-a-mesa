@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../api/client.js';
+import CampoPassword from '../components/CampoPassword.jsx';
 
 const estadoInicial = {
   nome: '',
@@ -124,13 +125,11 @@ export default function Registo() {
             Password
           </label>
 
-          <input
+          <CampoPassword
             id="password"
-            type="password"
-            className="form-control"
             value={formulario.password}
             onChange={alterar('password')}
-            required
+            autoComplete="new-password"
           />
         </div>
 
@@ -204,6 +203,13 @@ export default function Registo() {
         >
           Criar conta
         </button>
+
+        <p className="text-center texto-secundario mb-0">
+          Já tem conta?{' '}
+          <Link to="/login">
+            Entrar
+          </Link>
+        </p>
 
         {mensagem && (
           <div className="alert alert-success mb-0">

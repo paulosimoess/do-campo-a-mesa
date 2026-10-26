@@ -29,3 +29,43 @@
   display: grid;
   gap: 1rem;
 }
+
+
+.campo-password {
+  position: relative;
+
+  .form-control {
+    padding-right: 6rem;
+  }
+
+  &__botao {
+    position: absolute;
+    top: 50%;
+    right: 0.75rem;
+    transform: translateY(-50%);
+
+    border: none;
+    background: transparent;
+    color: $verde;
+
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0.35rem;
+
+    &:hover {
+      text-decoration: underline;
+    }
+
+    &:focus-visible {
+      outline: 2px solid $verde;
+      outline-offset: 2px;
+      border-radius: 0.25rem;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+}
