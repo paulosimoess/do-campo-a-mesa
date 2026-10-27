@@ -10,6 +10,13 @@ const reviewSchema = new Schema({
   classificacao: { type: Number, min: 1, max: 5, required: true },
   comentario: String,
   denuncias: { type: Number, default: 0 },
+
+  denunciantes: {
+    type: [{ type: Types.ObjectId, ref: 'User' }],
+    default: [],
+    select: false
+  },
+
   visivel: { type: Boolean, default: true }
 }, { timestamps: true });
 

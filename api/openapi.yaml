@@ -555,7 +555,14 @@ paths:
     post:
       tags: [Avaliações]
       summary: Denunciar avaliação
-      description: Incrementa o número de denúncias da avaliação.
+      description: >
+        Permite a um utilizador autenticado denunciar uma avaliação
+        pública. Cada utilizador só pode denunciar a mesma avaliação
+        uma vez. A denúncia é registada através de uma operação
+        atómica no MongoDB, evitando duplicações em pedidos
+        simultâneos. Uma denúncia aceite devolve HTTP 204.
+        Se o utilizador já tiver denunciado a avaliação ou esta
+        não estiver disponível, é devolvido HTTP 409.
       security:
         - bearerAuth: []
 
@@ -570,6 +577,9 @@ paths:
           $ref: '#/components/responses/Erro'
 
         '404':
+          $ref: '#/components/responses/Erro'
+
+        '409':
           $ref: '#/components/responses/Erro'
 
   /auth/registo:

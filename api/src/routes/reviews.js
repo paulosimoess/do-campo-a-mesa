@@ -145,25 +145,46 @@ router.get(
   })
 );
 
-// POST /api/reviews/:id/denuncia  -> 204
+
+// POST /api/reviews/:id/denuncia
 router.post(
   '/:id/denuncia',
   auth(),
   a(async (req, res) => {
-    const avaliacao = await Review.findByIdAndUpdate(
-      req.params.id,
+    const utilizadorId = req.user.id;
+    const avaliacao = await Review.findOneAndUpdate(
       {
+        _id: req.params.id,
+        visivel: true,
+        denunciantes: { $ne: utilizadorId }
+      },
+      {
+        $addToSet: {
+          denunciantes: utilizadorId
+        },
         $inc: {
           denuncias: 1
         }
       },
       {
-        new: true
+        new: true,
+        runValidators: true
       }
     );
 
     if (!avaliacao) {
-      throw erro(404, 'Avaliação não encontrada');
+      const existe = await Review.exists({
+        _id: req.params.id
+      });
+
+      if (!existe) {
+        throw erro(404, 'Avaliação não encontrada');
+      }
+
+      throw erro(
+        409,
+        'Esta avaliação já foi denunciada por si ou não está disponível'
+      );
     }
 
     res.status(204).end();
