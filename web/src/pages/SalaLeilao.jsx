@@ -74,7 +74,6 @@ export default function SalaLeilao() {
 
   const terminado = leilao.estado === 'terminado';
   const agendado = leilao.estado === 'agendado';
-
   const agora = Date.now() + offset;
 
   const ativoAgora =
@@ -91,12 +90,36 @@ export default function SalaLeilao() {
 
   const totalLicitacoes = leilao.numLicitacoes ?? historico.length;
 
+  function preencherAtalho(aumento) {
+    const valorIntroduzido = Number(valor);
+
+    const valorBase =
+      valor.trim() !== '' &&
+      Number.isFinite(valorIntroduzido) &&
+      valorIntroduzido >= minimo
+        ? valorIntroduzido
+        : minimo;
+
+    const novoValor = Math.round(
+      (valorBase + aumento) * 100
+    ) / 100;
+
+    setValor(novoValor.toFixed(2));
+  }
+
+  const valorNumerico = Number(valor);
+
+  const valorValido =
+    valor.trim() !== '' &&
+    Number.isFinite(valorNumerico) &&
+    valorNumerico >= minimo;
+
   function submeter(e) {
     e.preventDefault();
 
     if (valor.trim() === '') return;
 
-    licitar(Number(valor));
+    licitar(valorNumerico);
   }
 
   return (
@@ -250,9 +273,33 @@ export default function SalaLeilao() {
                 required
               />
 
+              <div className="d-flex flex-wrap gap-2 mb-3">
+                {[5, 10, 25].map((aumento) => (
+                  <button
+                    key={aumento}
+                    type="button"
+                    className="btn btn-outline-success btn-sm flex-fill"
+                    onClick={() => preencherAtalho(aumento)}
+                    aria-label={`Licitar mais ${aumento} euros sobre o valor atual`}
+                  >
+                    +{aumento} €
+                  </button>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                className="btn btn-outline-secondary w-100 mb-3"
+                onClick={() => setValor(minimo.toFixed(2))}
+                disabled={Number(valor) === minimo}
+              >
+                ↺ Repor mínimo ({formatarPreco(minimo)})
+              </button>
+
               <button
                 type="submit"
                 className="btn btn-success w-100"
+                disabled={!valorValido}
               >
                 Licitar
               </button>

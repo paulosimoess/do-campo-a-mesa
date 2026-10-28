@@ -6,6 +6,7 @@ const auth = require('../middleware/auth');
 const a = require('../utils/async');
 const erro = require('../utils/erro');
 const produtorValidado = require('../middleware/produtorValidado');
+const Product = require('../models/Product');
 
 // GET /api/auctions?estado=ativo  -> 200 [leilões]
 router.get('/', a(async (req, res) => {
@@ -115,6 +116,20 @@ router.post(
     );
 
     const agora = new Date();
+
+    if (produto) {
+      const produtoDoProdutor = await Product.exists({
+        _id: produto,
+        produtor: req.user.id
+      });
+
+      if (!produtoDoProdutor) {
+        throw erro(
+          400,
+          'O produto selecionado não pertence ao produtor ou não existe'
+        );
+      }
+    }
 
     const leilao = await Auction.create({
       produtor: req.user.id,

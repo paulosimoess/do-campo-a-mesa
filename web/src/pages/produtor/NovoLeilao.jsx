@@ -1,20 +1,64 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import produtosSimulados from '../../data/produtos.json';
+import { useAuth } from '../../context/AuthContext.jsx';
+import { api } from '../../api/client.js';
+
+const estadoInicial = {
+  produto: '',
+  lote: '',
+  quantidade: '',
+  precoBase: '',
+  incremento: '',
+  duracao: '30',
+  inicio: ''
+};
 
 export default function NovoLeilao() {
   const navigate = useNavigate();
+  const { utilizador, token } = useAuth();
 
-  const [dados, setDados] = useState({
-    produto: '',
-    quantidade: '',
-    precoBase: '',
-    incremento: '',
-    duracao: '30',
-    inicio: ''
-  });
+  const [dados, setDados] = useState(estadoInicial);
+  const [produtos, setProdutos] = useState([]);
+  const [erro, setErro] = useState('');
+  const [aCarregarProdutos, setACarregarProdutos] = useState(true);
+  const [aGuardar, setAGuardar] = useState(false);
 
-  const [mensagem, setMensagem] = useState('');
+  const idProdutor = utilizador?.id;
+
+  useEffect(() => {
+    if (!idProdutor) {
+      setACarregarProdutos(false);
+      return;
+    }
+
+    let cancelado = false;
+
+    async function carregarProdutos() {
+      try {
+        const lista = await api(
+          `/products?produtor=${encodeURIComponent(idProdutor)}`
+        );
+
+        if (!cancelado) {
+          setProdutos(lista);
+        }
+      } catch (err) {
+        if (!cancelado) {
+          setErro(err.message || 'Erro ao carregar produtos.');
+        }
+      } finally {
+        if (!cancelado) {
+          setACarregarProdutos(false);
+        }
+      }
+    }
+
+    carregarProdutos();
+
+    return () => {
+      cancelado = true;
+    };
+  }, [idProdutor]);
 
   function mudar(campo) {
     return (e) => {
@@ -25,10 +69,81 @@ export default function NovoLeilao() {
     };
   }
 
-  function submeter(e) {
+  async function submeter(e) {
     e.preventDefault();
+    if (aGuardar) return;
 
-    setMensagem('Leilão simulado criado com sucesso.');
+    setErro('');
+
+    const precoBase = Number(dados.precoBase);
+    const incremento = Number(dados.incremento);
+
+    if (
+      dados.precoBase.trim() === '' ||
+      dados.incremento.trim() === '' ||
+      !Number.isFinite(precoBase) ||
+      !Number.isFinite(incremento) ||
+      precoBase < 0 ||
+      incremento < 0.01
+    ) {
+      setErro('Indique um preço base e incremento válidos.');
+      return;
+    }
+
+    if (
+      ![precoBase, incremento].every(
+        (n) =>
+          Number.isSafeInteger(Math.round(n * 100)) &&
+          Math.abs(n * 100 - Math.round(n * 100)) < 1e-7
+      )
+    ) {
+      setErro('Os valores monetários só podem ter duas casas decimais.');
+      return;
+    }
+
+    const inicio = dados.inicio
+      ? new Date(dados.inicio)
+      : new Date();
+
+    if (
+      Number.isNaN(inicio.getTime()) ||
+      (dados.inicio && inicio.getTime() < Date.now() - 30000)
+    ) {
+      setErro('Escolha uma data de início válida, que não esteja no passado.');
+      return;
+    }
+
+    const lote = dados.lote.trim();
+    const quantidade = dados.quantidade.trim();
+
+    if (!lote || lote.length > 150 || !quantidade) {
+      setErro('Preencha corretamente o lote e a quantidade.');
+      return;
+    }
+
+    try {
+      setAGuardar(true);
+
+      const novoLeilao = await api('/auctions', {
+        metodo: 'POST',
+        token,
+        corpo: {
+          produto: dados.produto,
+          lote,
+          quantidade,
+          precoBase,
+          incremento,
+          iniciaEm: inicio.toISOString(),
+          duracaoMin: Number(dados.duracao)
+        }
+      });
+
+      navigate(`/leiloes/${novoLeilao._id}`);
+    } catch (err) {
+      setErro(err.message || 'Não foi possível criar o leilão.');
+    } finally {
+      setAGuardar(false);
+    }
   }
 
   return (
@@ -45,7 +160,10 @@ export default function NovoLeilao() {
         </p>
       </div>
 
-      <form className="novo-leilao__formulario" onSubmit={submeter}>
+      <form
+        className="novo-leilao__formulario"
+        onSubmit={submeter}
+      >
         <div>
           <label htmlFor="produto" className="form-label">
             Produto
@@ -56,13 +174,16 @@ export default function NovoLeilao() {
             className="form-select"
             value={dados.produto}
             onChange={mudar('produto')}
+            disabled={aCarregarProdutos || aGuardar}
             required
           >
             <option value="">
-              Selecionar produto
+              {aCarregarProdutos
+                ? 'A carregar produtos...'
+                : 'Selecionar produto'}
             </option>
 
-            {produtosSimulados.slice(0, 5).map((produto) => (
+            {produtos.map((produto) => (
               <option
                 key={produto._id}
                 value={produto._id}
@@ -71,6 +192,30 @@ export default function NovoLeilao() {
               </option>
             ))}
           </select>
+
+          {!aCarregarProdutos && produtos.length === 0 && (
+            <p className="texto-secundario small mt-2">
+              Ainda não tem produtos. Crie primeiro um produto
+              na área de gestão de produtos.
+            </p>
+          )}
+        </div>
+
+        <div>
+          <label htmlFor="lote" className="form-label">
+            Nome do lote
+          </label>
+
+          <input
+            id="lote"
+            type="text"
+            className="form-control"
+            placeholder="Ex.: 200 kg de kiwi Hayward"
+            maxLength={150}
+            value={dados.lote}
+            onChange={mudar('lote')}
+            required
+          />
         </div>
 
         <div>
@@ -92,7 +237,7 @@ export default function NovoLeilao() {
         <div className="novo-leilao__linha">
           <div>
             <label htmlFor="precoBase" className="form-label">
-              Preço base
+              Preço base (€)
             </label>
 
             <input
@@ -109,7 +254,7 @@ export default function NovoLeilao() {
 
           <div>
             <label htmlFor="incremento" className="form-label">
-              Incremento mínimo
+              Incremento mínimo (€)
             </label>
 
             <input
@@ -145,7 +290,7 @@ export default function NovoLeilao() {
 
           <div>
             <label htmlFor="inicio" className="form-label">
-              Início
+              Início (opcional)
             </label>
 
             <input
@@ -154,14 +299,17 @@ export default function NovoLeilao() {
               className="form-control"
               value={dados.inicio}
               onChange={mudar('inicio')}
-              required
             />
+
+            <p className="texto-secundario small mt-1 mb-0">
+              Deixe em branco para iniciar imediatamente.
+            </p>
           </div>
         </div>
 
-        {mensagem && (
-          <div className="alert alert-success">
-            {mensagem}
+        {erro && (
+          <div className="alert alert-danger" role="alert">
+            {erro}
           </div>
         )}
 
@@ -170,6 +318,7 @@ export default function NovoLeilao() {
             type="button"
             className="btn btn-outline-secondary"
             onClick={() => navigate('/produtor')}
+            disabled={aGuardar}
           >
             Cancelar
           </button>
@@ -177,8 +326,13 @@ export default function NovoLeilao() {
           <button
             type="submit"
             className="btn btn-success"
+            disabled={
+              aGuardar ||
+              aCarregarProdutos ||
+              produtos.length === 0
+            }
           >
-            Criar leilão
+            {aGuardar ? 'A criar leilão...' : 'Criar leilão'}
           </button>
         </div>
       </form>

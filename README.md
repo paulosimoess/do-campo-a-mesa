@@ -155,3 +155,30 @@ Na semana 7 ficam os testes, o relatório (`docs/relatorio.md`) e o vídeo.
 - Faça *commits* pequenos e frequentes, com mensagens claras. O histórico é considerado na avaliação.
 - O ficheiro `.env` nunca vai para o Git; use `.env.example` como modelo.
 - Declare no relatório as bibliotecas e os assistentes de IA que usar.
+
+
+### Consistência de dados e transações MongoDB
+
+A configuração atual do MongoDB não apresenta um replica set
+identificado, pelo que não são utilizadas transações
+multidocumento.
+
+Nas licitações, a atualização do preço é realizada através
+de `findOneAndUpdate`, com condições que garantem a
+atomicidade da atualização e evitam aceitar licitações
+concorrentes que não respeitem o incremento mínimo.
+
+Contudo, a atualização do leilão e a criação do respetivo
+registo na coleção `Bid` são operações separadas.
+Uma falha entre ambas poderá originar inconsistências.
+
+Nas encomendas, existem operações atómicas de atualização
+de stock e lógica de compensação em caso de erro, mas
+também não existe uma transação global.
+
+**Decisão:** manter a configuração atual para preservar
+a estabilidade do ambiente de desenvolvimento.
+
+**Melhoria futura:** configurar um replica set, após
+backup da base de dados, e implementar transações MongoDB
+para operações que envolvam múltiplos documentos.

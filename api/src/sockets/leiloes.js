@@ -168,6 +168,4 @@ module.exports = (io, socket) => {
       }
     }
   });
-
-  // TODO: fechar os leilões expirados (estado 'terminado') e avisar a sala e o vencedor
 };
