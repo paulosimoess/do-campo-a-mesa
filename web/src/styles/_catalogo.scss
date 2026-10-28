@@ -251,6 +251,59 @@
   border-color: $verde;
 }
 
+
+.filtros-linha {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.filtros-linha .filtros-categorias {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0;
+  width: auto;
+}
+
+.filtros-opcoes {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-left: auto;
+
+  .form-check {
+    margin-bottom: 0;
+    white-space: nowrap;
+  }
+}
+
+.filtro-epoca {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  label {
+    white-space: nowrap;
+    margin-bottom: 0;
+  }
+
+  .form-select {
+    width: 165px;
+  }
+}
+
+@media (max-width: 768px) {
+  .filtros-opcoes {
+    width: 100%;
+    margin-left: 0;
+  }
+}
+
 .leilao-destaque {
   padding: 1.5rem;
   margin-top: 0.5rem;

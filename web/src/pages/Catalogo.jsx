@@ -13,7 +13,8 @@ export default function Catalogo() {
   const [filtro, setFiltro] = useState({
     q: '',
     categoria: 'Todos',
-    bio: false
+    bio: false,
+    epoca: ''
   });
   const [erro, setErro] = useState('');
 
@@ -26,6 +27,7 @@ export default function Catalogo() {
         produtosSimulados.filter((p) =>
           (filtro.categoria === 'Todos' || p.categoria === filtro.categoria) &&
           (!filtro.bio || p.biologico) &&
+          (!filtro.epoca || p.epocas?.includes(filtro.epoca)) &&
           p.nome.toLowerCase().includes(filtro.q.toLowerCase())
         )
       );
@@ -75,46 +77,67 @@ export default function Catalogo() {
             id="pesquisa"
             type="search"
             className="form-control"
-            placeholder="Pesquisar kiwi, mel, Alvarinho…"
+            placeholder="Pesquisar kiwi, mel, Horta, Alvarinho…"
             value={filtro.q}
             onChange={mudar('q')}
           />
 
-          <div className="filtros-categorias">
-            {CATEGORIAS.map((c) => (
-              <button
-                key={c}
-                type="button"
-                className={`filtro-categoria ${
-                  filtro.categoria === c ? 'ativo' : ''
-                }`}
-                onClick={() =>
-                  setFiltro((f) => ({
-                    ...f,
-                    categoria: c
-                  }))
-                }
-              >
-                {c}
-              </button>
-            ))}
+          <div className="filtros-linha">
+            <div className="filtros-categorias">
+              {CATEGORIAS.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  className={`filtro-categoria ${
+                    filtro.categoria === c ? 'ativo' : ''
+                  }`}
+                  onClick={() =>
+                    setFiltro((f) => ({
+                      ...f,
+                      categoria: c
+                    }))
+                  }
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+
+            <div className="filtros-opcoes">
+              <div className="form-check">
+                <input
+                  id="bio"
+                  className="form-check-input"
+                  type="checkbox"
+                  checked={filtro.bio}
+                  onChange={mudar('bio')}
+                />
+
+                <label className="form-check-label" htmlFor="bio">
+                  Só biológico
+                </label>
+              </div>
+
+              <div className="filtro-epoca">
+                <label htmlFor="epoca">
+                  Época
+                </label>
+
+                <select
+                  id="epoca"
+                  className="form-select form-select-sm"
+                  value={filtro.epoca}
+                  onChange={mudar('epoca')}
+                >
+                  <option value="">Todas as épocas</option>
+                  <option value="Primavera">Primavera</option>
+                  <option value="Verão">Verão</option>
+                  <option value="Outono">Outono</option>
+                  <option value="Inverno">Inverno</option>
+                </select>
+              </div>
+            </div>
           </div>
-
-          <div className="form-check">
-            <input
-              id="bio"
-              className="form-check-input"
-              type="checkbox"
-              checked={filtro.bio}
-              onChange={mudar('bio')}
-            />
-
-            <label className="form-check-label" htmlFor="bio">
-              Só biológico
-            </label>
-          </div>
-
-          {/* TODO: filtros por época, preço máximo e ordenação */}
         </section>
 
         {erro && (

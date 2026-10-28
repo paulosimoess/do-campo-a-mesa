@@ -93,7 +93,7 @@ paths:
       parameters:
         - name: q
           in: query
-          description: Texto a pesquisar no nome do produto
+          description: Texto a pesquisar no nome do produto, no nome do produtor ou no nome da exploração
           schema:
             type: string
         - name: categoria
@@ -588,7 +588,11 @@ paths:
       summary: Registar utilizador
       description: >
         Regista um comprador ou produtor. Os produtores ficam inicialmente
-        por validar pelo administrador.
+        por validar pelo administrador. No registo de produtores, o sistema
+        tenta obter automaticamente as coordenadas aproximadas da localidade
+        através do Nominatim e guardá-las no MongoDB.
+        Caso o serviço de geocodificação esteja indisponível,
+        o registo continua normalmente, sem coordenadas.
 
       requestBody:
         required: true
@@ -1030,11 +1034,26 @@ components:
               example: Ponte de Lima
             localizacao:
               type: object
+              description: >
+                Coordenadas geográficas do produtor.
+                Podem representar a localidade aproximada
+                ou a localização da exploração.
               properties:
                 lat:
                   type: number
+                  format: double
+                  example: 41.7467782
                 lng:
                   type: number
+                  format: double
+                  example: -8.573465
+                origem:
+                  type: string
+                  enum: [localidade, exploracao]
+                  description: >
+                    localidade indica coordenadas aproximadas.
+                    exploracao indica a localização da exploração.
+                  example: localidade
             validado:
               type: boolean
         createdAt:
@@ -1394,6 +1413,20 @@ components:
 
             localidade:
               type: string
+
+            localizacao:
+              type: object
+              description: Coordenadas geográficas do produtor, quando disponíveis
+              properties:
+                lat:
+                  type: number
+                  format: double
+                lng:
+                  type: number
+                  format: double
+                origem:
+                  type: string
+                  enum: [localidade, exploracao]
 
             validado:
               type: boolean

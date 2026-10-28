@@ -1,11 +1,13 @@
 const router = require('express').Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-
 const User = require('../models/User');
 const auth = require('../middleware/auth');
 const a = require('../utils/async');
 const erro = require('../utils/erro');
+const {
+  obterLocalizacaoAproximada
+} = require('../services/geocodificacao');
 
 function emitirToken(utilizador) {
   return jwt.sign(
@@ -56,10 +58,69 @@ router.post(
       papel: papelFinal
     };
 
+
     if (papelFinal === 'produtor') {
+      const nomeExploracao = String(
+        produtor?.nomeExploracao || ''
+      ).trim();
+
+      const localidade = String(
+        produtor?.localidade || ''
+      ).trim();
+
+      if (!nomeExploracao || !localidade) {
+        throw erro(
+          400,
+          'Nome da exploração e localidade são obrigatórios'
+        );
+      }
+
+      let coordenadas = null;
+
+      try {
+        const localidadeSegura = localidade.replace(
+          /[.*+?^${}()|[\]\\]/g,
+          '\\$&'
+        );
+
+        const existente = await User.findOne({
+          papel: 'produtor',
+          'produtor.localidade': {
+            $regex: `^${localidadeSegura}$`,
+            $options: 'i'
+          },
+          'produtor.localizacao.origem': 'localidade',
+          'produtor.localizacao.lat': { $type: 'number' },
+          'produtor.localizacao.lng': { $type: 'number' }
+        }).select('produtor.localizacao');
+
+        if (existente) {
+          coordenadas = {
+            lat: existente.produtor.localizacao.lat,
+            lng: existente.produtor.localizacao.lng
+          };
+        } else {
+          coordenadas = await obterLocalizacaoAproximada(
+            localidade
+          );
+        }
+      } catch (err) {
+        console.warn(
+          'Não foi possível obter a localização:',
+          err.message
+        );
+      }
+
       dados.produtor = {
-        ...produtor,
-        validado: false
+        nomeExploracao,
+        localidade,
+        validado: false,
+        ...(coordenadas && {
+          localizacao: {
+            ...coordenadas,
+            origem: 'localidade'
+          }
+        })
       };
     }
 

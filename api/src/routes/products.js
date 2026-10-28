@@ -21,7 +21,6 @@ const produtorValidado = require('../middleware/produtorValidado');
 
 const CAMPOS = [
   'nome',
-  'descricao',
   'categoria',
   'preco',
   'unidade',
@@ -36,6 +35,8 @@ const escolher = (obj) =>
       .filter((campo) => obj[campo] !== undefined)
       .map((campo) => [campo, obj[campo]])
   );
+
+const User = require('../models/User');
 
 // GET /api/products?q=&categoria=&precoMax=&bio=&epoca=  -> 200 [produtos]
 // Exemplo já implementado; completar com os restantes filtros (época, produtor, ordenação…)
@@ -52,11 +53,29 @@ router.get('/', a(async (req, res) => {
 
   const filtro = {};
 
-  if (q) {
-    filtro.nome = {
-      $regex: escaparRegex(q),
+
+  if (typeof q === 'string' && q.trim()) {
+    const pesquisa = {
+      $regex: escaparRegex(q.trim()),
       $options: 'i'
     };
+
+    const produtoresEncontrados = await User.find({
+      papel: 'produtor',
+      $or: [
+        { nome: pesquisa },
+        { 'produtor.nomeExploracao': pesquisa }
+      ]
+    }).select('_id');
+
+    const idsProdutores = produtoresEncontrados.map(
+      (utilizador) => utilizador._id
+    );
+
+    filtro.$or = [
+      { nome: pesquisa },
+      { produtor: { $in: idsProdutores } }
+    ];
   }
 
   if (categoria && categoria !== 'Todos') {

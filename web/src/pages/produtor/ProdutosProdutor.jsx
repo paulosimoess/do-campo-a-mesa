@@ -8,8 +8,11 @@ const estadoInicial = {
   categoria: 'Hortícolas',
   preco: '',
   unidade: 'kg',
-  stock: ''
+  stock: '',
+  epocas: []
 };
+
+const EPOCAS = ['Primavera', 'Verão', 'Outono', 'Inverno'];
 
 export default function ProdutosProdutor() {
   const { utilizador, token } = useAuth();
@@ -51,6 +54,15 @@ export default function ProdutosProdutor() {
     };
   }
 
+  function alternarEpoca(epoca) {
+    setFormulario((anterior) => ({
+      ...anterior,
+      epocas: anterior.epocas.includes(epoca)
+        ? anterior.epocas.filter((e) => e !== epoca)
+        : [...anterior.epocas, epoca]
+    }));
+  }
+
   async function guardarProduto(e) {
     e.preventDefault();
 
@@ -63,7 +75,8 @@ export default function ProdutosProdutor() {
         categoria: formulario.categoria,
         preco: Number(formulario.preco),
         unidade: formulario.unidade,
-        stock: Number(formulario.stock || 0)
+        stock: Number(formulario.stock || 0),
+        epocas: formulario.epocas
       };
 
       if (produtoEmEdicao) {
@@ -141,7 +154,8 @@ export default function ProdutosProdutor() {
       categoria: produto.categoria,
       preco: String(produto.preco),
       unidade: produto.unidade || '',
-      stock: String(produto.stock ?? 0)
+      stock: String(produto.stock ?? 0),
+      epocas: produto.epocas || []
     });
 
     setMostrarFormulario(true);
@@ -327,6 +341,38 @@ export default function ProdutosProdutor() {
               onChange={alterar('stock')}
             />
           </div>
+
+          <fieldset className="mb-3">
+            <legend className="form-label">
+              Épocas de disponibilidade
+            </legend>
+
+            <div className="d-flex flex-wrap gap-3">
+              {EPOCAS.map((epoca) => (
+                <div className="form-check" key={epoca}>
+                  <input
+                    id={`epoca-${epoca}`}
+                    type="checkbox"
+                    className="form-check-input"
+                    checked={formulario.epocas.includes(epoca)}
+                    onChange={() => alternarEpoca(epoca)}
+                  />
+
+                  <label
+                    htmlFor={`epoca-${epoca}`}
+                    className="form-check-label"
+                  >
+                    {epoca}
+                  </label>
+                </div>
+              ))}
+            </div>
+
+            <small className="texto-secundario">
+              Selecione as épocas em que o produto está disponível.
+              Pode escolher mais do que uma.
+            </small>
+          </fieldset>
 
           {produtoEmEdicao && (
             <div className="mb-4">

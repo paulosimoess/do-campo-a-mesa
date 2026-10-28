@@ -43,7 +43,11 @@ const userSchema = new Schema({
 
     localizacao: {
       lat: Number,
-      lng: Number
+      lng: Number,
+      origem: {
+        type: String,
+        enum: ['localidade', 'exploracao']
+      }
     },
 
     validado: {

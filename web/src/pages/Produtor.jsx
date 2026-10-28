@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { API_URL, api } from '../api/client.js';
 import { useAuth } from '../context/AuthContext.jsx';
+import MapaProdutor from '../components/MapaProdutor.jsx';
 
 const euro = (valor) =>
   Number(valor || 0).toLocaleString('pt-PT', {
@@ -251,11 +252,10 @@ export default function Produtor() {
           </p>
         </section>
 
-        <div className="produtor-publico__mapa">
-          <span>
-            Localização · {localidade || 'Não indicada'}
-          </span>
-        </div>
+        <MapaProdutor
+          localidade={localidade}
+          localizacao={produtor.produtor?.localizacao}
+        />
       </div>
 
       <section className="produtor-publico__produtos mb-5">

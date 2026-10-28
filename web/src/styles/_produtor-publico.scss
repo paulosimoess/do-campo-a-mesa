@@ -136,3 +136,31 @@
     grid-template-columns: repeat(4, 1fr);
   }
 }
+
+.produtor-publico__mapa {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.produtor-publico__mapa iframe {
+  display: block;
+  width: 100%;
+  height: 280px;
+  flex-shrink: 0;
+}
+
+.produtor-publico__mapa p {
+  margin: 0;
+}
+
+.produtor-publico__mapa a {
+  align-self: flex-start;
+}
+
+.marcador-vermelho {
+  background: transparent;
+  border: none;
+}
