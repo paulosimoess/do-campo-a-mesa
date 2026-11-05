@@ -16,6 +16,7 @@ const orderSchema = new Schema({
   }],
   validate: [(linhas) => linhas.length > 0, 'A encomenda tem de ter pelo menos uma linha'] },
   estado: { type: String, enum: ESTADOS, default: 'pendente' },
+  entregueEm: { type: Date, default: null },
   entrega: {
     tipo: { type: String, enum: ['levantamento', 'entrega'], default: 'levantamento' },
     morada: String

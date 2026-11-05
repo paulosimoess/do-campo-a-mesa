@@ -16,13 +16,14 @@ const estadoInicial = {
 export default function NovoLeilao() {
   const navigate = useNavigate();
   const { utilizador, token } = useAuth();
-
   const [dados, setDados] = useState(estadoInicial);
   const [produtos, setProdutos] = useState([]);
   const [erro, setErro] = useState('');
   const [aCarregarProdutos, setACarregarProdutos] = useState(true);
   const [aGuardar, setAGuardar] = useState(false);
-
+  const [imagem, setImagem] = useState(null);
+  const [imagemPrevia, setImagemPrevia] = useState('');
+  const [leilaoCriadoId, setLeilaoCriadoId] = useState(null);
   const idProdutor = utilizador?.id;
 
   useEffect(() => {
@@ -67,6 +68,50 @@ export default function NovoLeilao() {
         [campo]: e.target.value
       }));
     };
+  }
+
+  useEffect(() => {
+    if (!imagem) {
+      setImagemPrevia('');
+      return;
+    }
+
+    const url = URL.createObjectURL(imagem);
+    setImagemPrevia(url);
+
+    return () => URL.revokeObjectURL(url);
+  }, [imagem]);
+
+  function escolherImagem(e) {
+    const ficheiro = e.target.files?.[0];
+
+    if (!ficheiro) {
+      setImagem(null);
+      return;
+    }
+
+    const tiposPermitidos = [
+      'image/jpeg',
+      'image/png',
+      'image/webp'
+    ];
+
+    if (!tiposPermitidos.includes(ficheiro.type)) {
+      setErro('A imagem deve ser JPG, PNG ou WebP.');
+      e.target.value = '';
+      setImagem(null);
+      return;
+    }
+
+    if (ficheiro.size > 5 * 1024 * 1024) {
+      setErro('A imagem não pode ultrapassar 5 MB.');
+      e.target.value = '';
+      setImagem(null);
+      return;
+    }
+
+    setImagem(ficheiro);
+    setErro('');
   }
 
   async function submeter(e) {
@@ -121,26 +166,52 @@ export default function NovoLeilao() {
       return;
     }
 
+    let idLeilao = leilaoCriadoId;
+
     try {
       setAGuardar(true);
 
-      const novoLeilao = await api('/auctions', {
-        metodo: 'POST',
-        token,
-        corpo: {
-          produto: dados.produto,
-          lote,
-          quantidade,
-          precoBase,
-          incremento,
-          iniciaEm: inicio.toISOString(),
-          duracaoMin: Number(dados.duracao)
-        }
-      });
+      if (!idLeilao) {
+        const novoLeilao = await api('/auctions', {
+          metodo: 'POST',
+          token,
+          corpo: {
+            produto: dados.produto,
+            lote,
+            quantidade,
+            precoBase,
+            incremento,
+            iniciaEm: inicio.toISOString(),
+            duracaoMin: Number(dados.duracao)
+          }
+        });
 
-      navigate(`/leiloes/${novoLeilao._id}`);
+        idLeilao = novoLeilao._id;
+        setLeilaoCriadoId(idLeilao);
+      }
+
+      if (imagem) {
+        const formData = new FormData();
+        formData.append('imagem', imagem);
+
+        await api(`/auctions/${idLeilao}/imagem`, {
+          metodo: 'POST',
+          token,
+          corpo: formData
+        });
+      }
+
+      navigate(`/leiloes/${idLeilao}`);
     } catch (err) {
-      setErro(err.message || 'Não foi possível criar o leilão.');
+      if (idLeilao) {
+        setErro(
+          `O leilão foi criado, mas não foi possível guardar a fotografia: ${
+            err.message
+          }. Pode tentar novamente ou abrir o leilão sem fotografia.`
+        );
+      } else {
+        setErro(err.message || 'Não foi possível criar o leilão.');
+      }
     } finally {
       setAGuardar(false);
     }
@@ -198,6 +269,41 @@ export default function NovoLeilao() {
               Ainda não tem produtos. Crie primeiro um produto
               na área de gestão de produtos.
             </p>
+          )}
+        </div>
+
+        <div>
+          <label htmlFor="imagemLeilao" className="form-label">
+            Fotografia do lote (opcional)
+          </label>
+
+          <input
+            id="imagemLeilao"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="form-control"
+            onChange={escolherImagem}
+            disabled={aGuardar}
+          />
+
+          <p className="texto-secundario small mt-2">
+            Formatos permitidos: JPG, PNG e WebP (máximo 5 MB).
+          </p>
+
+          {imagemPrevia && (
+            <div className="mt-3">
+              <img
+                src={imagemPrevia}
+                alt="Pré-visualização da fotografia do lote"
+                style={{
+                  width: '100%',
+                  maxWidth: '360px',
+                  maxHeight: '240px',
+                  objectFit: 'cover',
+                  borderRadius: '12px'
+                }}
+              />
+            </div>
           )}
         </div>
 
@@ -273,19 +379,24 @@ export default function NovoLeilao() {
         <div className="novo-leilao__linha">
           <div>
             <label htmlFor="duracao" className="form-label">
-              Duração
+              Duração (minutos)
             </label>
 
-            <select
+            <input
               id="duracao"
-              className="form-select"
+              type="number"
+              className="form-control"
+              min="10"
+              step="1"
               value={dados.duracao}
               onChange={mudar('duracao')}
-            >
-              <option value="15">15 minutos</option>
-              <option value="30">30 minutos</option>
-              <option value="60">1 hora</option>
-            </select>
+              placeholder="Ex.: 45"
+              required
+            />
+
+            <p className="texto-secundario small mt-1 mb-0">
+              Defina a duração pretendida em minutos.
+            </p>
           </div>
 
           <div>
@@ -307,10 +418,14 @@ export default function NovoLeilao() {
           </div>
         </div>
 
-        {erro && (
-          <div className="alert alert-danger" role="alert">
-            {erro}
-          </div>
+        {leilaoCriadoId && (
+          <button
+            type="button"
+            className="btn btn-outline-success"
+            onClick={() => navigate(`/leiloes/${leilaoCriadoId}`)}
+          >
+            Abrir leilão sem fotografia
+          </button>
         )}
 
         <div className="novo-leilao__acoes">
@@ -332,7 +447,11 @@ export default function NovoLeilao() {
               produtos.length === 0
             }
           >
-            {aGuardar ? 'A criar leilão...' : 'Criar leilão'}
+            {aGuardar
+              ? 'A guardar...'
+                : leilaoCriadoId
+                  ? 'Tentar enviar fotografia'
+                  : 'Criar leilão'}
           </button>
         </div>
       </form>

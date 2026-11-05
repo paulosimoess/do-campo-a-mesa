@@ -1,7 +1,7 @@
-
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api/client.js';
+import ImagemLeilao from './ImagemLeilao.jsx';
 
 function formatarPreco(valor) {
   return Number(valor).toLocaleString('pt-PT', {
@@ -157,6 +157,10 @@ export default function CartaoLeilaoDestaque() {
         </span>
       </div>
 
+      <ImagemLeilao
+        leilao={leilao}
+        className="leilao-destaque__imagem"
+      />
       <h2>{leilao.lote}</h2>
 
       <p className="leilao-destaque__produtor">

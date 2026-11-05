@@ -7,6 +7,16 @@ const a = require('../utils/async');
 const erro = require('../utils/erro');
 const produtorValidado = require('../middleware/produtorValidado');
 const Product = require('../models/Product');
+const multer = require('multer');
+
+const { guardarImagem, removerImagemLocal } = require('../services/imagens');
+
+const uploadImagemLeilao = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024
+  }
+});
 
 // GET /api/auctions?estado=ativo  -> 200 [leilões]
 router.get('/', a(async (req, res) => {
@@ -23,7 +33,7 @@ router.get('/', a(async (req, res) => {
       'produtor',
       'nome produtor.nomeExploracao produtor.localidade'
     )
-    .populate('produto', 'nome categoria unidade');
+    .populate('produto', 'nome categoria unidade imagemUrl');
 
   res.json(leiloes);
 }));
@@ -54,7 +64,7 @@ router.get('/:id', a(async (req, res) => {
       'produtor',
       'nome produtor.nomeExploracao produtor.localidade'
     )
-    .populate('produto', 'nome categoria unidade');
+    .populate('produto', 'nome categoria unidade imagemUrl');
 
   if (!leilao) {
     throw erro(404, 'Leilão não encontrado');
@@ -107,8 +117,8 @@ router.post(
 
     const duracao = Number(duracaoMin);
 
-    if (!Number.isFinite(duracao) || duracao <= 0) {
-      throw erro(400, 'Duração inválida');
+    if (!Number.isSafeInteger(duracao) || duracao <= 0) {
+      throw erro(400, 'A duração deve ser um número inteiro de minutos, superior a zero');
     }
 
     const fim = new Date(
@@ -150,6 +160,62 @@ router.post(
       .status(201)
       .location(`/api/auctions/${leilao._id}`)
       .json(leilao);
+  })
+);
+
+// POST /api/auctions/:id/imagem
+router.post(
+  '/:id/imagem',
+  auth('produtor'),
+  uploadImagemLeilao.single('imagem'),
+  a(async (req, res) => {
+    const leilao = await Auction.findOne({
+      _id: req.params.id,
+      produtor: req.user.id
+    });
+
+    if (!leilao) {
+      throw erro(404, 'Leilão não encontrado');
+    }
+
+    if (leilao.estado === 'terminado') {
+      throw erro(
+        409,
+        'Não é possível alterar a imagem de um leilão terminado'
+      );
+    }
+
+    if (!req.file) {
+      throw erro(400, 'Selecione uma imagem');
+    }
+
+    const imagemAnterior = leilao.imagemUrl;
+    const imagemUrl = await guardarImagem(req.file);
+
+    leilao.imagemUrl = imagemUrl;
+
+    try {
+      await leilao.save();
+    } catch (err) {
+      await removerImagemLocal(imagemUrl).catch(() => {});
+      throw err;
+    }
+
+    if (
+      imagemAnterior &&
+      imagemAnterior !== imagemUrl
+    ) {
+      try {
+        await removerImagemLocal(imagemAnterior);
+      } catch (err) {
+        console.warn(
+          'Não foi possível remover a imagem anterior:',
+          err.message
+        );
+      }
+    }
+
+    res.json({ imagemUrl });
   })
 );
 

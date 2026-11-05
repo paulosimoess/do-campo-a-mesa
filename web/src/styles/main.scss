@@ -98,3 +98,64 @@
   background: rgba($terracota, .06);
   margin-bottom: 1rem;
 }
+
+.leilao-cartao__imagem,
+.sala-leilao__imagem,
+.leilao-destaque__imagem {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #f2efe8;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  img {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  span {
+    padding: 1rem;
+    color: #68736b;
+    font-size: 0.9rem;
+    text-align: center;
+  }
+}
+
+.leilao-cartao__imagem {
+  margin: 0.75rem 0 1rem;
+}
+
+.sala-leilao__imagem {
+  margin-bottom: 1.5rem;
+}
+
+.leilao-destaque__imagem {
+  margin: 0.75rem 0 1rem;
+  max-height: 190px;
+}
+
+.sala-leilao__imagem {
+  width: 50%;
+  height: clamp(220px, 30vw, 360px);
+  max-height: 360px;
+  aspect-ratio: auto;
+  overflow: hidden;
+  border-radius: 14px;
+  background-color: #f2efe8;
+}
+
+.sala-leilao__imagem img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+}

@@ -69,12 +69,39 @@ export function useNotificacoes() {
       ].slice(0, 5));
     }
 
+    function onStockBaixo(dados) {
+      if (
+        !dados?.produtoId ||
+        !Number.isFinite(Number(dados.stock))
+      ) {
+        return;
+      }
+
+      proximoId.current += 1;
+
+      const notificacao = {
+        id: proximoId.current,
+        titulo: 'Stock baixo!',
+        mensagem:
+          `${dados.nome} tem apenas ${dados.stock} ` +
+          `${dados.unidade || 'unidades'} disponíveis.`,
+        destino: `/produtor/produtos?produto=${encodeURIComponent(dados.produtoId)}`
+      };
+
+      setNotificacoes((anteriores) => [
+        notificacao,
+        ...anteriores
+      ].slice(0, 5));
+    }
+
     socket.on('leilao-ganho', onLeilaoGanho);
     socket.on('encomenda-atualizada', onEncomendaAtualizada);
+    socket.on('stock-baixo', onStockBaixo);
 
     return () => {
       socket.off('leilao-ganho', onLeilaoGanho);
       socket.off('encomenda-atualizada', onEncomendaAtualizada);
+      socket.off('stock-baixo', onStockBaixo);
     };
   }, [socket]);
 

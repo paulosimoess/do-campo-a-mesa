@@ -45,6 +45,55 @@ paths:
                 items:
                   $ref: '#/components/schemas/Producer'
 
+  /producers/me:
+    patch:
+      tags: [Produtores]
+      summary: Atualizar o perfil da própria exploração
+      description: >
+        Permite a um produtor autenticado editar o nome
+        e a descrição da sua exploração. A localização
+        e o estado de validação não podem ser alterados
+        através deste endpoint.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nomeExploracao, descricao]
+              properties:
+                nomeExploracao:
+                  type: string
+                  minLength: 1
+                  maxLength: 100
+                  example: Horta da Ribeira
+                descricao:
+                  type: string
+                  maxLength: 1000
+                  example: Exploração familiar em Ponte de Lima.
+      responses:
+        '200':
+          description: Perfil atualizado com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  nomeExploracao:
+                    type: string
+                  descricao:
+                    type: string
+        '400':
+          $ref: '#/components/responses/Erro'
+        '401':
+          $ref: '#/components/responses/Erro'
+        '403':
+          $ref: '#/components/responses/Erro'
+        '404':
+          $ref: '#/components/responses/Erro'
+
   /producers/{id}:
     parameters:
       - $ref: '#/components/parameters/Id'
@@ -423,6 +472,57 @@ paths:
           $ref: '#/components/responses/Erro'
 
         '404':
+          $ref: '#/components/responses/Erro'
+
+  /auctions/{id}/imagem:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+
+    post:
+      tags: [Leilões]
+      summary: Carregar fotografia de um leilão
+      description: >
+        Permite ao produtor responsável carregar a fotografia de um leilão ainda não
+        terminado. Aceita JPEG, PNG e WebP até 5 MB.
+        A fotografia é opcional na criação do leilão.
+      security:
+        - bearerAuth: []
+
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [imagem]
+              properties:
+                imagem:
+                  type: string
+                  format: binary
+                  description: Fotografia do lote
+
+      responses:
+        '200':
+          description: Fotografia guardada com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  imagemUrl:
+                    type: string
+                    description: URL da fotografia guardada
+                    example: /uploads/exemplo.jpg
+
+        '400':
+          $ref: '#/components/responses/Erro'
+        '401':
+          $ref: '#/components/responses/Erro'
+        '403':
+          $ref: '#/components/responses/Erro'
+        '404':
+          $ref: '#/components/responses/Erro'
+        '409':
           $ref: '#/components/responses/Erro'
 
   /auctions/{id}/bids:
@@ -1151,6 +1251,13 @@ components:
         updatedAt:
           type: string
           format: date-time
+        entregueEm:
+          type: string
+          format: date-time
+          nullable: true
+          description: >
+            Data em que a encomenda foi marcada como entregue.
+            Pode ser nula em encomendas antigas ou ainda não entregues.
 
     AuctionStatus:
       type: string
@@ -1195,9 +1302,9 @@ components:
           format: date-time
 
         duracaoMin:
-          type: number
-          minimum: 0
-          exclusiveMinimum: true
+          type: integer
+          minimum: 1
+          description: Duração do leilão em minutos.
           example: 30
 
     Auction:
@@ -1276,6 +1383,15 @@ components:
         updatedAt:
           type: string
           format: date-time
+
+        imagemUrl:
+          type: string
+          nullable: true
+          description: >
+            Fotografia própria do leilão.
+            Quando não existe, a interface pode apresentar
+            a imagem do produto associado.
+          example: /uploads/exemplo.jpg
 
     Bid:
       type: object

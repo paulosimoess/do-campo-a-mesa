@@ -5,6 +5,7 @@ const Product = require('../models/Product');
 const Review = require('../models/Review');
 const a = require('../utils/async');
 const erro = require('../utils/erro');
+const auth = require('../middleware/auth');
 
 // GET /api/producers?localidade=  -> 200 [produtores validados]
 router.get(
@@ -29,6 +30,55 @@ router.get(
       .sort({ nome: 1 });
 
     res.json(produtores);
+  })
+);
+
+// PATCH /api/producers/me — editar a própria exploração
+router.patch(
+  '/me',
+  auth('produtor'),
+  a(async (req, res) => {
+    const { nomeExploracao, descricao } = req.body || {};
+
+    if (
+      typeof nomeExploracao !== 'string' ||
+      typeof descricao !== 'string'
+    ) {
+      throw erro(400, 'Dados do perfil inválidos');
+    }
+
+    const nome = nomeExploracao.trim();
+    const texto = descricao.trim();
+
+    if (!nome || nome.length > 100 || texto.length > 1000) {
+      throw erro(400, 'Nome ou descrição inválidos');
+    }
+
+    const atualizado = await User.findOneAndUpdate(
+      {
+        _id: req.user.id,
+        papel: 'produtor'
+      },
+      {
+        $set: {
+          'produtor.nomeExploracao': nome,
+          'produtor.descricao': texto
+        }
+      },
+      {
+        new: true,
+        runValidators: true
+      }
+    );
+
+    if (!atualizado) {
+      throw erro(404, 'Produtor não encontrado');
+    }
+
+    res.json({
+      nomeExploracao: atualizado.produtor.nomeExploracao,
+      descricao: atualizado.produtor.descricao || ''
+    });
   })
 );
 

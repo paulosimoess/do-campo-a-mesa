@@ -3,29 +3,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { api } from '../../api/client.js';
-
-const indicadores = [
-  {
-    titulo: 'Vendas este mês',
-    valor: '1 284 €',
-    detalhe: '+15% face a setembro'
-  },
-  {
-    titulo: 'Encomendas por tratar',
-    valor: '4',
-    detalhe: '2 pendentes'
-  },
-  {
-    titulo: 'Produtos ativos',
-    valor: '12',
-    detalhe: '3 com stock baixo'
-  },
-  {
-    titulo: 'Avaliação média',
-    valor: '4,7',
-    detalhe: '51 avaliações'
-  }
-];
+import EstadoEncomenda from '../../components/EstadoEncomenda.jsx';
 
 const euro = (valor) =>
   Number(valor || 0).toLocaleString('pt-PT', {
@@ -34,31 +12,80 @@ const euro = (valor) =>
   });
 
 export default function PainelProdutor() {
-  const { token } = useAuth();
-
+  const { token, utilizador } = useAuth();
   const [encomendas, setEncomendas] = useState([]);
+  const [produtos, setProdutos] = useState([]);
+  const [avaliacao, setAvaliacao] = useState({
+    media: null,
+    total: 0
+  });
   const [erro, setErro] = useState('');
   const [aCarregar, setACarregar] = useState(true);
+  const [leiloes, setLeiloes] = useState([]);
+  const [perfil, setPerfil] = useState({
+    nomeExploracao: '',
+    descricao: ''
+  });
+
+  const [aGuardarPerfil, setAGuardarPerfil] = useState(false);
+  const [erroPerfil, setErroPerfil] = useState('');
+  const [mensagemPerfil, setMensagemPerfil] = useState('');
 
   useEffect(() => {
-    async function carregarEncomendas() {
+    if (!token || !utilizador?.id) return;
+
+    let cancelado = false;
+
+    async function carregarDados() {
       try {
         setErro('');
+        setACarregar(true);
 
-        const dados = await api('/orders', {
-          token
+        const [
+          listaEncomendas,
+          listaProdutos,
+          dadosProdutor,
+          listaLeiloes
+        ] = await Promise.all([
+          api('/orders', { token }),
+          api(`/products?produtor=${utilizador.id}`),
+          api(`/producers/${utilizador.id}`),
+          api('/auctions')
+        ]);
+
+        if (cancelado) return;
+
+        setEncomendas(listaEncomendas);
+        setProdutos(listaProdutos);
+        setLeiloes(listaLeiloes);
+
+        setAvaliacao({
+          media: dadosProdutor.avaliacaoMedia ?? null,
+          total: dadosProdutor.totalAvaliacoes ?? 0
         });
-
-        setEncomendas(dados);
+        setPerfil({
+          nomeExploracao:
+            dadosProdutor.produtor?.produtor?.nomeExploracao || '',
+          descricao:
+            dadosProdutor.produtor?.produtor?.descricao || ''
+        });
       } catch (err) {
-        setErro(err.message);
+        if (!cancelado) {
+          setErro(err.message);
+        }
       } finally {
-        setACarregar(false);
+        if (!cancelado) {
+          setACarregar(false);
+        }
       }
     }
 
-    carregarEncomendas();
-  }, [token]);
+    carregarDados();
+
+    return () => {
+      cancelado = true;
+    };
+  }, [token, utilizador?.id]);
 
   async function atualizarEstado(encomenda, novoEstado) {
     try {
@@ -84,6 +111,148 @@ export default function PainelProdutor() {
       );
     } catch (err) {
       setErro(err.message);
+    }
+  }
+
+const agora = new Date();
+
+const encomendasDoMes = encomendas.filter((encomenda) => {
+  if (encomenda.estado !== 'entregue' || !encomenda.entregueEm) {
+    return false;
+  }
+
+  const dataEntrega = new Date(encomenda.entregueEm);
+
+  return (
+    !Number.isNaN(dataEntrega.getTime()) &&
+    dataEntrega.getMonth() === agora.getMonth() &&
+    dataEntrega.getFullYear() === agora.getFullYear()
+  );
+});
+
+const vendasMes = encomendasDoMes.reduce(
+  (total, encomenda) =>
+    total +
+    (encomenda.linhas || []).reduce(
+      (subtotal, linha) =>
+        subtotal +
+        Number(linha.precoUnit || 0) *
+          Number(linha.quantidade || 0),
+      0
+    ),
+  0
+);
+
+const porTratar = encomendas.filter(
+  (e) => e.estado !== 'entregue'
+).length;
+
+const pendentes = encomendas.filter(
+  (e) => e.estado === 'pendente'
+).length;
+
+const produtosAtivos = produtos.filter(
+  (p) => Number(p.stock) > 0
+).length;
+
+const LIMITE_STOCK_BAIXO = 15;
+
+const produtosStockBaixo = produtos.filter(
+  (p) => Number(p.stock) <= LIMITE_STOCK_BAIXO
+);
+
+const mediaFormatada =
+  avaliacao.media == null
+    ? '—'
+    : Number(avaliacao.media).toFixed(1).replace('.', ',');
+
+const indicadores = [
+  {
+    titulo: 'Vendas este mês',
+    valor: euro(vendasMes),
+    detalhe: `${encomendasDoMes.length} encomendas entregues`
+  },
+  {
+    titulo: 'Encomendas por tratar',
+    valor: String(porTratar),
+    detalhe: `${pendentes} pendentes`
+  },
+  {
+    titulo: 'Produtos ativos',
+    valor: String(produtosAtivos),
+    detalhe: `${produtosStockBaixo.length} com stock baixo ou esgotado`
+  },
+  {
+    titulo: 'Avaliação média',
+    valor: mediaFormatada,
+    detalhe: `${avaliacao.total} avaliações`
+  }
+];
+
+{!aCarregar && !erro && produtosStockBaixo.length > 0 && (
+  <div className="alert alert-warning mt-4" role="status">
+    <strong>Atenção ao stock!</strong>
+    <p className="mb-2">
+      Os seguintes produtos têm stock igual ou inferior a {LIMITE_STOCK_BAIXO}:
+    </p>
+
+    <ul className="mb-0">
+      {produtosStockBaixo.map((produto) => (
+        <li key={produto._id}>
+          {produto.nome} — {produto.stock} {produto.unidade}
+        </li>
+      ))}
+    </ul>
+  </div>
+)}
+
+const leiloesDoProdutor = leiloes
+  .filter((leilao) => {
+    const produtorId =
+      leilao.produtor?._id ?? leilao.produtor;
+
+    return (
+      String(produtorId) === String(utilizador?.id) &&
+      ['ativo', 'agendado'].includes(leilao.estado)
+    );
+  })
+  .sort((a, b) => {
+    if (a.estado !== b.estado) {
+      return a.estado === 'ativo' ? -1 : 1;
+    }
+
+    return new Date(a.iniciaEm) - new Date(b.iniciaEm);
+  });
+
+  async function guardarPerfil(e) {
+    e.preventDefault();
+
+    setErroPerfil('');
+    setMensagemPerfil('');
+    setAGuardarPerfil(true);
+
+    try {
+      const atualizado = await api('/producers/me', {
+        metodo: 'PATCH',
+        token,
+        corpo: {
+          nomeExploracao: perfil.nomeExploracao,
+          descricao: perfil.descricao
+        }
+      });
+
+      setPerfil({
+        nomeExploracao: atualizado.nomeExploracao,
+        descricao: atualizado.descricao
+      });
+
+      setMensagemPerfil('Perfil atualizado com sucesso.');
+    } catch (err) {
+      setErroPerfil(
+        err.message || 'Não foi possível atualizar o perfil.'
+      );
+    } finally {
+      setAGuardarPerfil(false);
     }
   }
 
@@ -134,10 +303,160 @@ export default function PainelProdutor() {
         ))}
       </div>
 
+      <section className="mt-5">
+        <h2 className="h4 mb-3">Perfil da exploração</h2>
+
+        <form className="card" onSubmit={guardarPerfil}>
+          <div className="card-body d-grid gap-3">
+            <div>
+              <label htmlFor="nomeExploracao" className="form-label">
+                Nome da exploração
+              </label>
+
+              <input
+                id="nomeExploracao"
+                type="text"
+                className="form-control"
+                maxLength={100}
+                value={perfil.nomeExploracao}
+                onChange={(e) =>
+                  setPerfil((atual) => ({
+                    ...atual,
+                    nomeExploracao: e.target.value
+                  }))
+                }
+                required
+              />
+            </div>
+
+            <div>
+              <label htmlFor="descricaoExploracao" className="form-label">
+                Sobre a exploração
+              </label>
+
+              <textarea
+                id="descricaoExploracao"
+                className="form-control"
+                rows={4}
+                maxLength={1000}
+                placeholder="Conte a história da sua exploração..."
+                value={perfil.descricao}
+                onChange={(e) =>
+                  setPerfil((atual) => ({
+                    ...atual,
+                    descricao: e.target.value
+                  }))
+                }
+              />
+
+              <small className="texto-secundario">
+                {perfil.descricao.length}/1000 caracteres
+              </small>
+            </div>
+
+            {erroPerfil && (
+              <div className="alert alert-danger mb-0">
+                {erroPerfil}
+              </div>
+            )}
+
+            {mensagemPerfil && (
+              <div className="alert alert-success mb-0">
+                {mensagemPerfil}
+              </div>
+            )}
+
+            <div className="d-flex justify-content-end">
+              <button
+                type="submit"
+                className="btn btn-success"
+                disabled={aGuardarPerfil}
+              >
+                {aGuardarPerfil
+                  ? 'A guardar...'
+                  : 'Guardar alterações'}
+              </button>
+            </div>
+          </div>
+        </form>
+      </section>
+
+      <section className="mt-5">
+        <h2 className="h4 mb-3">Os meus leilões</h2>
+
+        {!aCarregar && !erro && leiloesDoProdutor.length === 0 && (
+          <p className="texto-secundario">
+            Não existem leilões ativos ou agendados.
+          </p>
+        )}
+
+        {!aCarregar && !erro && (
+          <div className="row g-3">
+            {leiloesDoProdutor.map((leilao) => (
+              <div
+                key={leilao._id}
+                className="col-12 col-lg-6"
+              >
+                <article className="card h-100">
+                  <div className="card-body">
+                    <div className="d-flex justify-content-between align-items-start gap-2 mb-3">
+                      <h3 className="h5 mb-0">{leilao.lote}</h3>
+
+                      <span
+                        className={
+                          leilao.estado === 'ativo'
+                            ? 'badge bg-success'
+                            : 'badge bg-secondary'
+                        }
+                      >
+                        {leilao.estado === 'ativo'
+                          ? 'Em direto'
+                          : 'Agendado'}
+                      </span>
+                    </div>
+
+                    <p className="mb-1">
+                      Preço atual:{' '}
+                      <strong>
+                        {euro(
+                          leilao.licitacaoAtual?.valor ??
+                          leilao.precoBase
+                        )}
+                      </strong>
+                    </p>
+
+                    <p className="mb-1">
+                      Licitações:{' '}
+                      <strong>{leilao.numLicitacoes ?? 0}</strong>
+                    </p>
+
+                    <p className="texto-secundario small mb-3">
+                      {leilao.estado === 'ativo'
+                        ? 'Termina'
+                        : 'Começa'}:{' '}
+                      {new Date(
+                        leilao.estado === 'ativo'
+                          ? leilao.terminaEm
+                          : leilao.iniciaEm
+                      ).toLocaleString('pt-PT')}
+                    </p>
+
+                    <Link
+                      to={`/leiloes/${leilao._id}`}
+                      className="btn btn-outline-success w-100"
+                    >
+                      Acompanhar leilão
+                    </Link>
+                  </div>
+                </article>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
       <div className="mt-5">
-        <h2 className="h4 mb-3">
-          Encomendas recebidas
-        </h2>
+        <h2 className="h4 mb-3">Encomendas recebidas</h2>
 
         {aCarregar && (
           <p className="texto-secundario">
@@ -157,42 +476,93 @@ export default function PainelProdutor() {
           </p>
         )}
 
-        <div className="d-grid gap-3">
+        <div className="encomendas__lista">
           {encomendas.map((encomenda) => (
             <article
               key={encomenda._id}
-              className="card"
+              className="encomenda-cartao"
             >
-              <div className="card-body">
-                <div className="d-flex justify-content-between gap-3">
-                  <div>
-                    <h3 className="h5">
-                      Encomenda #{encomenda._id}
-                    </h3>
+              <div className="encomenda-cartao__topo">
+                <div>
+                  <p className="encomenda-cartao__numero">
+                    #{encomenda._id}
+                  </p>
 
-                    <p className="mb-1">
-                      Estado: <strong>{encomenda.estado}</strong>
-                    </p>
-
-                    <p className="mb-0">
-                      Total: <strong>{euro(encomenda.total)}</strong>
-                    </p>
-                  </div>
+                  <h3 className="h5 mb-0">
+                    {encomenda.comprador?.nome ||
+                      'Encomenda recebida'}
+                  </h3>
                 </div>
 
-                <div className="mt-3 d-flex gap-2 flex-wrap">
+                <div className="encomenda-cartao__resumo">
+                  <span>
+                    {new Date(
+                      encomenda.createdAt
+                    ).toLocaleDateString('pt-PT')}
+                  </span>
+
+                  <strong>{euro(encomenda.total)}</strong>
+                </div>
+              </div>
+
+              <details className="mb-3">
+                <summary
+                  className="fw-semibold"
+                  style={{ cursor: 'pointer' }}
+                >
+                  Ver produtos da encomenda
+                </summary>
+
+                <div className="border rounded-3 p-3 mt-2">
+                  {encomenda.linhas?.map((linha, indice) => (
+                    <div
+                      key={linha._id || indice}
+                      className="d-flex justify-content-between align-items-start gap-3 py-2"
+                    >
+                      <div>
+                        <strong>{linha.nome}</strong>
+
+                        <p className="texto-secundario mb-0">
+                          {linha.quantidade}
+                          {linha.unidade
+                            ? ` ${linha.unidade}`
+                            : ''}
+                          {' × '}
+                          {euro(linha.precoUnit)}
+                        </p>
+                      </div>
+
+                      <strong>
+                        {euro(
+                          linha.quantidade * linha.precoUnit
+                        )}
+                      </strong>
+                    </div>
+                  ))}
+
+                  {(!encomenda.linhas ||
+                    encomenda.linhas.length === 0) && (
+                    <p className="texto-secundario mb-0">
+                      Não existem produtos associados
+                      a esta encomenda.
+                    </p>
+                  )}
+                </div>
+              </details>
+
+              <EstadoEncomenda estado={encomenda.estado} />
+
+              {encomenda.estado !== 'entregue' && (
+                <div className="encomenda-cartao__acoes">
                   {encomenda.estado === 'pendente' && (
                     <button
                       type="button"
                       className="btn btn-success btn-sm"
                       onClick={() =>
-                        atualizarEstado(
-                          encomenda,
-                          'confirmada'
-                        )
+                        atualizarEstado(encomenda, 'confirmada')
                       }
                     >
-                      Confirmar
+                      Confirmar encomenda
                     </button>
                   )}
 
@@ -201,10 +571,7 @@ export default function PainelProdutor() {
                       type="button"
                       className="btn btn-success btn-sm"
                       onClick={() =>
-                        atualizarEstado(
-                          encomenda,
-                          'pronta'
-                        )
+                        atualizarEstado(encomenda, 'pronta')
                       }
                     >
                       Marcar como pronta
@@ -216,17 +583,14 @@ export default function PainelProdutor() {
                       type="button"
                       className="btn btn-success btn-sm"
                       onClick={() =>
-                        atualizarEstado(
-                          encomenda,
-                          'entregue'
-                        )
+                        atualizarEstado(encomenda, 'entregue')
                       }
                     >
                       Marcar como entregue
                     </button>
                   )}
                 </div>
-              </div>
+              )}
             </article>
           ))}
         </div>

@@ -5,7 +5,6 @@ const auth = require('../middleware/auth');
 const { guardarImagem, removerImagemLocal } = require('../services/imagens');
 const a = require('../utils/async');
 const erro = require('../utils/erro');
-
 const escaparRegex = (texto) =>
   texto.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -38,8 +37,26 @@ const escolher = (obj) =>
 
 const User = require('../models/User');
 
-// GET /api/products?q=&categoria=&precoMax=&bio=&epoca=  -> 200 [produtos]
-// Exemplo já implementado; completar com os restantes filtros (época, produtor, ordenação…)
+const {
+  emitirAlertaStockBaixo
+} = require('../services/alertasStock');
+
+// GET /api/products/:id  -> 200 | 404
+router.get('/:id', a(async (req, res) => {
+  const produto = await Product.findById(req.params.id)
+    .populate(
+      'produtor',
+      'nome produtor.localidade produtor.nomeExploracao'
+    );
+
+  if (!produto) {
+    throw erro(404, 'Produto não encontrado');
+  }
+
+  res.json(produto);
+}));
+
+// GET /api/products — listar e pesquisar produtos
 router.get('/', a(async (req, res) => {
   const {
     q,
@@ -52,7 +69,6 @@ router.get('/', a(async (req, res) => {
   } = req.query;
 
   const filtro = {};
-
 
   if (typeof q === 'string' && q.trim()) {
     const pesquisa = {
@@ -83,9 +99,7 @@ router.get('/', a(async (req, res) => {
   }
 
   if (precoMax) {
-    filtro.preco = {
-      $lte: Number(precoMax)
-    };
+    filtro.preco = { $lte: Number(precoMax) };
   }
 
   if (bio === 'true') {
@@ -93,9 +107,7 @@ router.get('/', a(async (req, res) => {
   }
 
   if (epoca) {
-    filtro.epocas = {
-      $in: [epoca]
-    };
+    filtro.epocas = { $in: [epoca] };
   }
 
   if (produtor) {
@@ -110,21 +122,6 @@ router.get('/', a(async (req, res) => {
     );
 
   res.json(lista);
-}));
-
-// GET /api/products/:id  -> 200 | 404
-router.get('/:id', a(async (req, res) => {
-  const produto = await Product.findById(req.params.id)
-    .populate(
-      'produtor',
-      'nome produtor.localidade produtor.nomeExploracao'
-    );
-
-  if (!produto) {
-    throw erro(404, 'Produto não encontrado');
-  }
-
-  res.json(produto);
 }));
 
 // POST /api/products  (produtor)  -> 201 + Location
@@ -145,25 +142,48 @@ router.post(
   })
 );
 
-// PUT /api/products/:id  (produtor dono)  -> 200 | 404
+// PUT /api/products/:id (produtor dono) -> 200 | 404
 router.put(
   '/:id',
   auth('produtor'),
   a(async (req, res) => {
-    const produto = await Product.findOneAndUpdate(
+    const alteracoes = escolher(req.body);
+
+    const anterior = await Product.findOneAndUpdate(
       {
         _id: req.params.id,
         produtor: req.user.id
       },
-      escolher(req.body),
       {
-        new: true,
+        $set: alteracoes
+      },
+      {
+        new: false,
         runValidators: true
       }
     );
 
+    if (!anterior) {
+      throw erro(404, 'Produto não encontrado');
+    }
+
+    const produto = await Product.findById(anterior._id);
+
     if (!produto) {
       throw erro(404, 'Produto não encontrado');
+    }
+
+    if (
+      Object.prototype.hasOwnProperty.call(
+        alteracoes,
+        'stock'
+      )
+    ) {
+      emitirAlertaStockBaixo(req.app.get('io'), {
+        produto,
+        stockAnterior: anterior.stock,
+        stockAtual: produto.stock
+      });
     }
 
     res.json(produto);

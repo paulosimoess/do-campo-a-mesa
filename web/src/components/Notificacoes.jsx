@@ -43,7 +43,9 @@ export default function Notificacoes() {
                   removerNotificacao(notificacao.id)
                 }
               >
-                Ver encomenda
+                {notificacao.destino?.startsWith('/produtor/produtos')
+                  ? 'Gerir produtos'
+                  : 'Ver encomenda'}
               </Link>
             </div>
 

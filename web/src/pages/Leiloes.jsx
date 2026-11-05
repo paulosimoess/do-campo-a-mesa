@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api/client.js';
+import ImagemLeilao from '../components/ImagemLeilao.jsx';
 
 const etiquetasEstado = {
   ativo: 'EM DIRETO',
@@ -56,6 +57,12 @@ export default function Leiloes() {
     };
   }, []);
 
+  const leiloesOrdenados = [...leiloes].sort(
+    (a, b) =>
+      new Date(b.createdAt).getTime() -
+      new Date(a.createdAt).getTime()
+  );
+
   return (
     <section className="leiloes">
       <div className="leiloes__cabecalho">
@@ -92,7 +99,7 @@ export default function Leiloes() {
       )}
 
       <div className="leiloes__grelha">
-        {leiloes.map((leilao) => {
+        {leiloesOrdenados.map((leilao) => {
           const produtor = leilao.produtor;
 
           const nomeProdutor =
@@ -129,6 +136,10 @@ export default function Leiloes() {
                 </span>
               </div>
 
+              <ImagemLeilao
+                leilao={leilao}
+                className="leilao-cartao__imagem"
+              />
               <h2>{leilao.lote}</h2>
 
               <p className="texto-secundario">

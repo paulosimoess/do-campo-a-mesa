@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useLeilao } from '../hooks/useLeilao.js';
 import { useContagem } from '../hooks/useContagem.js';
+import ImagemLeilao from '../components/ImagemLeilao.jsx';
 
 function formatarPreco(valor) {
   return Number(valor).toLocaleString('pt-PT', {
@@ -147,10 +148,6 @@ export default function SalaLeilao() {
               agendado ? leilao.iniciaEm : leilao.terminaEm
             )}
           </p>
-        </div>
-
-        <div className="sala-leilao__imagem">
-          <span>Imagem do lote</span>
         </div>
 
         <section className="historico-licitacoes">

@@ -6,6 +6,10 @@ const Order = require('../models/Order');
 const a = require('../utils/async');
 const erro = require('../utils/erro');
 const { Types } = require('mongoose');
+const {
+  LIMITE_STOCK_BAIXO,
+  emitirAlertaStockBaixo
+} = require('../services/alertasStock');
 
 async function reporStock(reservas) {
   await Promise.all(
@@ -31,6 +35,7 @@ router.post(
 
     const reservas = [];
     const porProdutor = new Map();
+    const alertasStock = new Map();
 
     try {
       for (const linha of linhas) {
@@ -70,6 +75,22 @@ router.post(
           quantidade
         });
 
+        const stockAnterior = produto.stock + quantidade;
+        const chaveProduto = String(produto._id);
+
+        if (alertasStock.has(chaveProduto)) {
+          alertasStock.get(chaveProduto).stockAtual = produto.stock;
+        } else if (
+          stockAnterior > LIMITE_STOCK_BAIXO &&
+          produto.stock <= LIMITE_STOCK_BAIXO
+        ) {
+          alertasStock.set(chaveProduto, {
+            produto,
+            stockAnterior,
+            stockAtual: produto.stock
+          });
+        }
+
         const produtorId = produto.produtor.toString();
 
         if (!porProdutor.has(produtorId)) {
@@ -99,6 +120,12 @@ router.post(
           }
         }))
       );
+
+      const io = req.app.get('io');
+
+      for (const alerta of alertasStock.values()) {
+        emitirAlertaStockBaixo(io, alerta);
+      }
 
       res.status(201).json(encomendas);
     } catch (err) {
@@ -170,6 +197,14 @@ router.patch(
       throw erro(400, 'Estado inválido');
     }
 
+    const atualizacao = {
+      estado
+    };
+
+    if (estado === 'entregue') {
+      atualizacao.entregueEm = new Date();
+    }
+
     const encomenda = await Order.findOneAndUpdate(
       {
         _id: req.params.id,
@@ -179,7 +214,7 @@ router.patch(
         }
       },
       {
-        estado
+        $set: atualizacao
       },
       {
         new: true,
