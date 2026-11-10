@@ -6,6 +6,7 @@ const Review = require('../models/Review');
 const a = require('../utils/async');
 const erro = require('../utils/erro');
 const auth = require('../middleware/auth');
+const produtorValidado = require('../middleware/produtorValidado');
 
 // GET /api/producers?localidade=  -> 200 [produtores validados]
 router.get(
@@ -37,6 +38,7 @@ router.get(
 router.patch(
   '/me',
   auth('produtor'),
+  produtorValidado,
   a(async (req, res) => {
     const { nomeExploracao, descricao } = req.body || {};
 

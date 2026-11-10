@@ -159,3 +159,29 @@
   object-fit: contain;
   object-position: center;
 }
+
+.navbar-btn-sair {
+  &:hover,
+  &:focus-visible {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    color: #fff;
+  }
+}
+
+.navbar-acoes {
+  .nav-link {
+    color: #495057;
+    font-weight: 500;
+    padding: 0.5rem 0.6rem;
+
+    &:hover {
+      color: #285d3c;
+    }
+
+    &.active {
+      color: #285d3c;
+      font-weight: 700;
+    }
+  }
+}

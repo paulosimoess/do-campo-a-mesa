@@ -150,6 +150,10 @@ module.exports = (io, socket) => {
         numLicitacoes: leilao.numLicitacoes
       });
 
+      io.to('admin:leiloes').emit(
+        'leiloes-admin-atualizados'
+      );
+
       if (typeof responder === 'function') {
         responder({ ok: true, valor });
       }

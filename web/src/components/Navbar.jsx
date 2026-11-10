@@ -55,39 +55,47 @@ export default function Navbar() {
                 </NavLink>
               </li>
             )}
-
-            {utilizador?.papel === 'produtor' && (
-              <li className="nav-item">
-                <NavLink to="/produtor" className="nav-link">
-                  Painel
-                </NavLink>
-              </li>
-            )}
-
-            {utilizador?.papel === 'admin' && (
-              <li className="nav-item">
-                <NavLink to="/admin" className="nav-link">
-                  Administração
-                </NavLink>
-              </li>
-            )}
           </ul>
 
           <div className="navbar-acoes">
-            {utilizador?.papel === 'comprador' && (
-              <Link to="/carrinho" className="btn btn-outline-secondary">
-                Carrinho ({linhas.length})
-              </Link>
-            )}
-
             {utilizador ? (
-              <button
-                type="button"
-                className="btn btn-outline-secondary"
-                onClick={sair}
-              >
-                Sair
-              </button>
+              <>
+                {['produtor', 'admin'].includes(utilizador.papel) && (
+                  <NavLink
+                    to={utilizador.papel === 'admin' ? '/admin' : '/produtor'}
+                    end
+                    className="nav-link">
+                    Painel
+                  </NavLink>
+                )}
+
+                {['produtor', 'comprador'].includes(utilizador.papel) && (
+                  <NavLink
+                    to={
+                      utilizador.papel === 'produtor'
+                        ? '/produtor/perfil'
+                        : '/comprador/perfil'
+                    }
+                    className="nav-link"
+                  >
+                    Perfil
+                  </NavLink>
+                )}
+
+                {utilizador?.papel === 'comprador' && (
+                  <Link to="/carrinho" className="btn btn-outline-secondary">
+                    Carrinho ({linhas.length})
+                  </Link>
+                )}
+
+                <button
+                  type="button"
+                  className="btn btn-outline-secondary navbar-btn-sair"
+                  onClick={sair}
+                >
+                  Sair
+                </button>
+              </>
             ) : (
               <>
                 <Link to="/login" className="btn btn-outline-secondary">

@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { api } from '../../api/client.js';
+import { useSocket } from '../../context/SocketContext.jsx';
 
 export default function PainelAdmin() {
   const { token } = useAuth();
+  const socket = useSocket();
 
   const [produtoresPendentes, setProdutoresPendentes] = useState([]);
   const [erroProdutores, setErroProdutores] = useState('');
@@ -38,7 +40,7 @@ export default function PainelAdmin() {
     carregarProdutoresPendentes();
   }, [token]);
 
-  async function aprovarProdutor(produtorId) {
+  async function validarProdutor(produtorId, aprovado) {
     try {
       setErroProdutores('');
 
@@ -46,9 +48,7 @@ export default function PainelAdmin() {
         `/admin/produtores/${produtorId}/validacao`,
         {
           metodo: 'PATCH',
-          corpo: {
-            aprovado: true
-          },
+          corpo: { aprovado },
           token
         }
       );
@@ -129,26 +129,54 @@ export default function PainelAdmin() {
   }, [token]);
 
   useEffect(() => {
-    async function carregarLeiloesAtivos() {
-      try {
-        setErroLeiloes('');
+    let ativo = true;
+    let pedidoAtual = 0;
 
-        const dados = await api(
-          '/auctions?estado=ativo'
-        );
+    async function carregarLeiloesAtivos() {
+      const pedido = ++pedidoAtual;
+
+      try {
+        const dados = await api('/auctions?estado=ativo');
+
+        if (!ativo || pedido !== pedidoAtual) return;
 
         setLeiloesAtivos(dados);
+        setErroLeiloes('');
       } catch (err) {
-        setErroLeiloes(err.message);
+        if (ativo && pedido === pedidoAtual) {
+          setErroLeiloes(err.message);
+        }
       } finally {
-        setACarregarLeiloes(false);
+        if (ativo && pedido === pedidoAtual) {
+          setACarregarLeiloes(false);
+        }
       }
     }
 
     carregarLeiloesAtivos();
-  }, []);
 
-  
+    if (socket) {
+      socket.on(
+        'leiloes-admin-atualizados',
+        carregarLeiloesAtivos
+      );
+
+      socket.on('connect', carregarLeiloesAtivos);
+    }
+
+    return () => {
+      ativo = false;
+
+      if (socket) {
+        socket.off(
+          'leiloes-admin-atualizados',
+          carregarLeiloesAtivos
+        );
+
+        socket.off('connect', carregarLeiloesAtivos);
+      }
+    };
+  }, [socket]);
 
   return (
     <section className="painel-admin">
@@ -274,10 +302,20 @@ export default function PainelAdmin() {
                   type="button"
                   className="btn btn-sm btn-success"
                   onClick={() =>
-                    aprovarProdutor(produtor._id)
+                    validarProdutor(produtor._id, true)
                   }
                 >
                   Aprovar
+                </button>
+
+                <button
+                  type="button"
+                  className="btn btn-sm btn-outline-danger"
+                  onClick={() =>
+                    validarProdutor(produtor._id, false)
+                  }
+                >
+                  Rejeitar
                 </button>
               </div>
             </article>

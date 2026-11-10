@@ -28,6 +28,7 @@ async function abrirAgendados(io) {
     io.to(`leilao:${_id}`).emit('aberto', {
       leilaoId: String(_id)
     });
+    io.to('admin:leiloes').emit('leiloes-admin-atualizados');
 
     console.log(`Leilão iniciado: ${_id}`);
   }
@@ -60,6 +61,7 @@ async function fecharExpiradosSemVencedor(io) {
       vencedor: null,
       valor: null
     });
+    io.to('admin:leiloes').emit('leiloes-admin-atualizados');
 
     console.log(`Leilão terminado sem vencedor: ${_id}`);
   }
@@ -89,6 +91,7 @@ async function fecharExpiradosComVencedor(io) {
       let leilao = candidato;
 
       if (leilao.estado === 'ativo') {
+        io.to('admin:leiloes').emit('leiloes-admin-atualizados');
         leilao = await Auction.findOneAndUpdate(
           {
             _id: candidato._id,

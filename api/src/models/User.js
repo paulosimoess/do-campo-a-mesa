@@ -53,6 +53,11 @@ const userSchema = new Schema({
     validado: {
       type: Boolean,
       default: false
+    },
+
+    rejeitado: {
+      type: Boolean,
+      default: false
     }
   }
 }, { timestamps: true });

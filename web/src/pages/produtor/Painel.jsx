@@ -22,14 +22,7 @@ export default function PainelProdutor() {
   const [erro, setErro] = useState('');
   const [aCarregar, setACarregar] = useState(true);
   const [leiloes, setLeiloes] = useState([]);
-  const [perfil, setPerfil] = useState({
-    nomeExploracao: '',
-    descricao: ''
-  });
-
-  const [aGuardarPerfil, setAGuardarPerfil] = useState(false);
-  const [erroPerfil, setErroPerfil] = useState('');
-  const [mensagemPerfil, setMensagemPerfil] = useState('');
+  const [estadoValidacao, setEstadoValidacao] = useState(null);
 
   useEffect(() => {
     if (!token || !utilizador?.id) return;
@@ -40,6 +33,22 @@ export default function PainelProdutor() {
       try {
         setErro('');
         setACarregar(true);
+
+        const contaAtual = await api('/auth/eu', { token });
+
+        if (cancelado) return;
+
+        if (contaAtual.produtor?.rejeitado) {
+          setEstadoValidacao('rejeitado');
+          return;
+        }
+
+        if (!contaAtual.produtor?.validado) {
+          setEstadoValidacao('pendente');
+          return;
+        }
+
+        setEstadoValidacao('aprovado');
 
         const [
           listaEncomendas,
@@ -62,12 +71,6 @@ export default function PainelProdutor() {
         setAvaliacao({
           media: dadosProdutor.avaliacaoMedia ?? null,
           total: dadosProdutor.totalAvaliacoes ?? 0
-        });
-        setPerfil({
-          nomeExploracao:
-            dadosProdutor.produtor?.produtor?.nomeExploracao || '',
-          descricao:
-            dadosProdutor.produtor?.produtor?.descricao || ''
         });
       } catch (err) {
         if (!cancelado) {
@@ -224,36 +227,48 @@ const leiloesDoProdutor = leiloes
     return new Date(a.iniciaEm) - new Date(b.iniciaEm);
   });
 
-  async function guardarPerfil(e) {
-    e.preventDefault();
+  if (
+    estadoValidacao === 'rejeitado' ||
+    estadoValidacao === 'pendente'
+  ) {
+    const rejeitado = estadoValidacao === 'rejeitado';
 
-    setErroPerfil('');
-    setMensagemPerfil('');
-    setAGuardarPerfil(true);
+    return (
+      <section className="painel-produtor">
+        <div className="painel-produtor__cabecalho">
+          <div>
+            <p className="painel-produtor__etiqueta">
+              ÁREA DO PRODUTOR
+            </p>
 
-    try {
-      const atualizado = await api('/producers/me', {
-        metodo: 'PATCH',
-        token,
-        corpo: {
-          nomeExploracao: perfil.nomeExploracao,
-          descricao: perfil.descricao
-        }
-      });
+            <h1>Estado da conta</h1>
 
-      setPerfil({
-        nomeExploracao: atualizado.nomeExploracao,
-        descricao: atualizado.descricao
-      });
+            <p className="texto-secundario">
+              Consulte o estado da validação da sua exploração.
+            </p>
+          </div>
+        </div>
 
-      setMensagemPerfil('Perfil atualizado com sucesso.');
-    } catch (err) {
-      setErroPerfil(
-        err.message || 'Não foi possível atualizar o perfil.'
-      );
-    } finally {
-      setAGuardarPerfil(false);
-    }
+        <div
+          className={`alert ${
+            rejeitado ? 'alert-danger' : 'alert-warning'
+          } mt-4`}
+          role="status"
+        >
+          <strong>
+            {rejeitado
+              ? 'Registo de produtor rejeitado'
+              : 'Registo a aguardar validação'}
+          </strong>
+
+          <p className="mb-0 mt-2">
+            {rejeitado
+              ? 'O seu pedido de registo como produtor não foi aprovado pelo administrador. Não pode gerir produtos, encomendas ou leilões com esta conta.'
+              : 'O seu pedido de registo está a aguardar validação pelo administrador.'}
+          </p>
+        </div>
+      </section>
+    );
   }
 
   return (
@@ -302,84 +317,6 @@ const leiloesDoProdutor = leiloes
           </article>
         ))}
       </div>
-
-      <section className="mt-5">
-        <h2 className="h4 mb-3">Perfil da exploração</h2>
-
-        <form className="card" onSubmit={guardarPerfil}>
-          <div className="card-body d-grid gap-3">
-            <div>
-              <label htmlFor="nomeExploracao" className="form-label">
-                Nome da exploração
-              </label>
-
-              <input
-                id="nomeExploracao"
-                type="text"
-                className="form-control"
-                maxLength={100}
-                value={perfil.nomeExploracao}
-                onChange={(e) =>
-                  setPerfil((atual) => ({
-                    ...atual,
-                    nomeExploracao: e.target.value
-                  }))
-                }
-                required
-              />
-            </div>
-
-            <div>
-              <label htmlFor="descricaoExploracao" className="form-label">
-                Sobre a exploração
-              </label>
-
-              <textarea
-                id="descricaoExploracao"
-                className="form-control"
-                rows={4}
-                maxLength={1000}
-                placeholder="Conte a história da sua exploração..."
-                value={perfil.descricao}
-                onChange={(e) =>
-                  setPerfil((atual) => ({
-                    ...atual,
-                    descricao: e.target.value
-                  }))
-                }
-              />
-
-              <small className="texto-secundario">
-                {perfil.descricao.length}/1000 caracteres
-              </small>
-            </div>
-
-            {erroPerfil && (
-              <div className="alert alert-danger mb-0">
-                {erroPerfil}
-              </div>
-            )}
-
-            {mensagemPerfil && (
-              <div className="alert alert-success mb-0">
-                {mensagemPerfil}
-              </div>
-            )}
-
-            <div className="d-flex justify-content-end">
-              <button
-                type="submit"
-                className="btn btn-success"
-                disabled={aGuardarPerfil}
-              >
-                {aGuardarPerfil
-                  ? 'A guardar...'
-                  : 'Guardar alterações'}
-              </button>
-            </div>
-          </div>
-        </form>
-      </section>
 
       <section className="mt-5">
         <h2 className="h4 mb-3">Os meus leilões</h2>

@@ -146,6 +146,7 @@ router.post(
 router.put(
   '/:id',
   auth('produtor'),
+  produtorValidado,
   a(async (req, res) => {
     const alteracoes = escolher(req.body);
 
@@ -194,6 +195,7 @@ router.put(
 router.delete(
   '/:id',
   auth('produtor'),
+  produtorValidado,
   a(async (req, res) => {
     const resultado = await Product.deleteOne({
       _id: req.params.id,
@@ -213,6 +215,7 @@ router.delete(
 router.post(
   '/:id/imagem',
   auth('produtor'),
+  produtorValidado,
   upload.single('imagem'),
   a(async (req, res) => {
     const produto = await Product.findOne({

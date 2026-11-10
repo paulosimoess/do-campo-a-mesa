@@ -156,6 +156,12 @@ router.post(
       estado: inicio <= agora ? 'ativo' : 'agendado'
     });
 
+    if (leilao.estado === 'ativo') {
+      req.app.get('io')?.to('admin:leiloes').emit(
+        'leiloes-admin-atualizados'
+      );
+    }
+
     res
       .status(201)
       .location(`/api/auctions/${leilao._id}`)
@@ -167,6 +173,7 @@ router.post(
 router.post(
   '/:id/imagem',
   auth('produtor'),
+  produtorValidado,
   uploadImagemLeilao.single('imagem'),
   a(async (req, res) => {
     const leilao = await Auction.findOne({

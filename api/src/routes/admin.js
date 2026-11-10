@@ -49,7 +49,8 @@ router.get(
   a(async (req, res) => {
     const produtores = await User.find({
       papel: 'produtor',
-      'produtor.validado': false
+      'produtor.validado': false,
+      'produtor.rejeitado': { $ne: true }
     }).select('nome email produtor createdAt');
 
     res.json(produtores);
@@ -72,7 +73,8 @@ router.patch(
         papel: 'produtor'
       },
       {
-        'produtor.validado': aprovado
+        'produtor.validado': aprovado,
+        'produtor.rejeitado': !aprovado
       },
       {
         new: true,

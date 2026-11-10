@@ -4,6 +4,12 @@ module.exports = async (req, res, next) => {
   try {
     const utilizador = await User.findById(req.user.id);
 
+    if (utilizador?.produtor?.rejeitado) {
+      return res.status(403).json({
+        erro: 'O seu registo como produtor foi rejeitado pelo administrador'
+      });
+    }
+
     if (!utilizador?.produtor?.validado) {
       return res.status(403).json({
         erro: 'Conta de produtor a aguardar validação do administrador'
