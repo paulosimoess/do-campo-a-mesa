@@ -106,9 +106,9 @@ export default function Perfil() {
   }
 
   return (
-    <section className="novo-leilao">
-      <div className="novo-leilao__cabecalho">
-        <p className="novo-leilao__etiqueta">
+    <section className="formulario-produtor">
+      <div className="formulario-produtor__cabecalho">
+        <p className="formulario-produtor__etiqueta">
           A MINHA CONTA
         </p>
 
@@ -122,7 +122,7 @@ export default function Perfil() {
         </p>
       </div>
 
-      <div className="novo-leilao__formulario">
+      <div className="formulario-produtor__formulario">
         <h2 className="h5 mb-0">Dados da conta</h2>
 
         <div>
@@ -254,7 +254,7 @@ export default function Perfil() {
                   </div>
                 )}
 
-                <div className="novo-leilao__acoes">
+                <div className="formulario-produtor__acoes">
                   <button
                     type="submit"
                     className="btn btn-success"

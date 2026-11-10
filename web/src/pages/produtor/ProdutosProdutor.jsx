@@ -316,17 +316,17 @@ export default function ProdutosProdutor() {
   return (
     <section
       className={`produtos-produtor${
-        mostrarFormulario ? ' novo-leilao' : ''
+        mostrarFormulario ? ' formulario-produtor' : ''
       }`}
     >
       <div
         className={mostrarFormulario
-          ? 'novo-leilao__cabecalho'
+          ? 'formulario-produtor__cabecalho'
           : 'produtos-produtor__cabecalho'}
       >
         <div>
           <p className={mostrarFormulario
-            ? 'novo-leilao__etiqueta'
+            ? 'formulario-produtor__etiqueta'
             : 'produtos-produtor__etiqueta'}>
             ÁREA DO PRODUTOR
           </p>
@@ -359,7 +359,7 @@ export default function ProdutosProdutor() {
 
       {mostrarFormulario && (
         <form
-          className="novo-leilao__formulario produtos-produtor__formulario"
+          className="formulario-produtor__formulario produtos-produtor__formulario"
           onSubmit={guardarProduto}
         >
           <div className="mb-3">
@@ -424,7 +424,7 @@ export default function ProdutosProdutor() {
             </select>
           </div>
 
-          <div className="novo-leilao__linha">
+          <div className="formulario-produtor__linha">
             <div className="mb-3">
               <label htmlFor="preco" className="form-label">
                 Preço (€)
@@ -528,7 +528,7 @@ export default function ProdutosProdutor() {
             </p>
 
             {(imagemPrevia || produtoEmEdicao?.imagemUrl) && (
-              <div className="produtos-produtor__imagem-previa mt-3">
+              <div className="formulario-produtor__imagem-previa mt-3">
                 <img
                   src={imagemPrevia || urlImagem(produtoEmEdicao.imagemUrl)}
                   alt={imagemPrevia
@@ -545,7 +545,7 @@ export default function ProdutosProdutor() {
             </div>
           )}
 
-          <div className="novo-leilao__acoes">
+          <div className="formulario-produtor__acoes">
             <button
               type="button"
               className="btn btn-outline-secondary"

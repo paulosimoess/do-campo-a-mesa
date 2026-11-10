@@ -134,9 +134,9 @@ export default function Carrinho() {
 
                   <span
                     className="fw-bold text-center"
-                    style={{ minWidth: '2rem' }}
+                    style={{ minWidth: '4rem' }}
                   >
-                    {quantidade}
+                    {quantidade} {produto.unidade}
                   </span>
 
                   <button

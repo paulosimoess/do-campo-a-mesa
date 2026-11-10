@@ -218,9 +218,9 @@ export default function NovoLeilao() {
   }
 
   return (
-    <section className="novo-leilao">
-      <div className="novo-leilao__cabecalho">
-        <p className="novo-leilao__etiqueta">
+    <section className="formulario-produtor">
+      <div className="formulario-produtor__cabecalho">
+        <p className="formulario-produtor__etiqueta">
           ÁREA DO PRODUTOR
         </p>
 
@@ -232,7 +232,7 @@ export default function NovoLeilao() {
       </div>
 
       <form
-        className="novo-leilao__formulario"
+        className="formulario-produtor__formulario"
         onSubmit={submeter}
       >
         <div>
@@ -291,17 +291,10 @@ export default function NovoLeilao() {
           </p>
 
           {imagemPrevia && (
-            <div className="mt-3">
+            <div className="formulario-produtor__imagem-previa mt-3">
               <img
                 src={imagemPrevia}
                 alt="Pré-visualização da fotografia do lote"
-                style={{
-                  width: '100%',
-                  maxWidth: '360px',
-                  maxHeight: '240px',
-                  objectFit: 'cover',
-                  borderRadius: '12px'
-                }}
               />
             </div>
           )}
@@ -340,7 +333,7 @@ export default function NovoLeilao() {
           />
         </div>
 
-        <div className="novo-leilao__linha">
+        <div className="formulario-produtor__linha">
           <div>
             <label htmlFor="precoBase" className="form-label">
               Preço base (€)
@@ -376,7 +369,7 @@ export default function NovoLeilao() {
           </div>
         </div>
 
-        <div className="novo-leilao__linha">
+        <div className="formulario-produtor__linha">
           <div>
             <label htmlFor="duracao" className="form-label">
               Duração (minutos)
@@ -418,6 +411,12 @@ export default function NovoLeilao() {
           </div>
         </div>
 
+        {erro && (
+          <div className="alert alert-danger mb-0" role="alert">
+            {erro}
+          </div>
+        )}
+
         {leilaoCriadoId && (
           <button
             type="button"
@@ -428,7 +427,7 @@ export default function NovoLeilao() {
           </button>
         )}
 
-        <div className="novo-leilao__acoes">
+        <div className="formulario-produtor__acoes">
           <button
             type="button"
             className="btn btn-outline-secondary"
