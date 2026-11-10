@@ -1,10 +1,17 @@
-import { Link, NavLink } from 'react-router-dom';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useCarrinho } from '../context/CarrinhoContext.jsx';
 
 export default function Navbar() {
   const { utilizador, sair } = useAuth();
   const { linhas } = useCarrinho();
+
+  const navigate = useNavigate();
+
+  function terminarSessao() {
+    sair();
+    navigate('/', { replace: true });
+  }
 
   return (
     <header className="barra-topo">
@@ -91,7 +98,7 @@ export default function Navbar() {
                 <button
                   type="button"
                   className="btn btn-outline-secondary navbar-btn-sair"
-                  onClick={sair}
+                  onClick={terminarSessao}
                 >
                   Sair
                 </button>
