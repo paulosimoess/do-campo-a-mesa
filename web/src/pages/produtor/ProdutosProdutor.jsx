@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext.jsx';
 import { api } from '../../api/client.js';
 import { useSocket } from '../../context/SocketContext.jsx';
 import { useSearchParams } from 'react-router-dom';
+import ModalConfirmacao from '../../components/ModalConfirmacao.jsx';
 
 const estadoInicial = {
   nome: '',
@@ -45,6 +46,7 @@ export default function ProdutosProdutor() {
   const [imagem, setImagem] = useState(null);
   const [imagemPrevia, setImagemPrevia] = useState('');
   const [imagemFalhou, setImagemFalhou] = useState(false);
+  const [produtoParaRemover, setProdutoParaRemover] = useState(null);
 
   useEffect(() => {
     async function carregarProdutos() {
@@ -268,14 +270,6 @@ export default function ProdutosProdutor() {
   }
 
   async function removerProduto(produtoId) {
-    const confirmado = window.confirm(
-      'Tem a certeza de que pretende remover este produto?'
-    );
-
-    if (!confirmado) {
-      return;
-    }
-
     try {
       setErro('');
 
@@ -651,9 +645,7 @@ export default function ProdutosProdutor() {
               <button
                 type="button"
                 className="btn btn-sm btn-outline-danger"
-                onClick={() =>
-                  removerProduto(produto._id)
-                }
+                onClick={() => setProdutoParaRemover(produto)}
               >
                 Remover
               </button>
@@ -662,6 +654,24 @@ export default function ProdutosProdutor() {
         ))}
         </div>
       )}
+
+      <ModalConfirmacao
+        aberto={Boolean(produtoParaRemover)}
+        titulo="Remover produto"
+        mensagem={`Tem a certeza de que pretende remover o produto "${produtoParaRemover?.nome}"? Esta ação não pode ser desfeita.`}
+        textoConfirmar="Remover produto"
+        variante="danger"
+        cancelarVermelho={false}
+        onCancelar={() => setProdutoParaRemover(null)}
+        onConfirmar={() => {
+          if (!produtoParaRemover) return;
+
+          const produtoId = produtoParaRemover._id;
+          setProdutoParaRemover(null);
+
+          removerProduto(produtoId);
+        }}
+      />
     </section>
   );
 }

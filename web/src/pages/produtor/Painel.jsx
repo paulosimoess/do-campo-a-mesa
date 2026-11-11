@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { api } from '../../api/client.js';
 import EstadoEncomenda from '../../components/EstadoEncomenda.jsx';
+import ModalConfirmacao from '../../components/ModalConfirmacao.jsx';
 
 const euro = (valor) =>
   Number(valor || 0).toLocaleString('pt-PT', {
@@ -23,6 +24,7 @@ export default function PainelProdutor() {
   const [aCarregar, setACarregar] = useState(true);
   const [leiloes, setLeiloes] = useState([]);
   const [estadoValidacao, setEstadoValidacao] = useState(null);
+  const [encomendaParaEntregar, setEncomendaParaEntregar] = useState(null);
 
   useEffect(() => {
     if (!token || !utilizador?.id) return;
@@ -519,9 +521,7 @@ const leiloesDoProdutor = leiloes
                     <button
                       type="button"
                       className="btn btn-success btn-sm"
-                      onClick={() =>
-                        atualizarEstado(encomenda, 'entregue')
-                      }
+                      onClick={() => setEncomendaParaEntregar(encomenda)}
                     >
                       Marcar como entregue
                     </button>
@@ -532,6 +532,23 @@ const leiloesDoProdutor = leiloes
           ))}
         </div>
       </div>
+
+      <ModalConfirmacao
+        aberto={Boolean(encomendaParaEntregar)}
+        titulo="Confirmar entrega"
+        mensagem="Tem a certeza de que pretende marcar esta encomenda como entregue?"
+        textoConfirmar="Confirmar entrega"
+        variante="success"
+        onCancelar={() => setEncomendaParaEntregar(null)}
+        onConfirmar={() => {
+          if (!encomendaParaEntregar) return;
+
+          const encomenda = encomendaParaEntregar;
+          setEncomendaParaEntregar(null);
+
+          atualizarEstado(encomenda, 'entregue');
+        }}
+      />
     </section>
   );
 }

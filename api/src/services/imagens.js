@@ -5,6 +5,11 @@ const crypto = require('crypto');
 const { BlobServiceClient } = require('@azure/storage-blob');
 const erro = require('../utils/erro');
 
+const {
+  S3Client,
+  PutObjectCommand
+} = require('@aws-sdk/client-s3');
+
 const TIPOS = {
   'image/jpeg': '.jpg',
   'image/png': '.png',
@@ -21,6 +26,41 @@ const PASTA_UPLOADS = path.join(
 );
 
 let container;
+let clienteS3;
+
+function obterClienteS3() {
+  const campos = [
+    'SUPABASE_S3_ENDPOINT',
+    'SUPABASE_S3_REGION',
+    'SUPABASE_S3_ACCESS_KEY_ID',
+    'SUPABASE_S3_SECRET_ACCESS_KEY',
+    'SUPABASE_URL'
+  ];
+
+  const emFalta = campos.filter(
+    (campo) => !process.env[campo]
+  );
+
+  if (emFalta.length > 0) {
+    throw new Error(
+      `Configuração Supabase incompleta: ${emFalta.join(', ')}`
+    );
+  }
+
+  if (!clienteS3) {
+    clienteS3 = new S3Client({
+      endpoint: process.env.SUPABASE_S3_ENDPOINT,
+      region: process.env.SUPABASE_S3_REGION,
+      forcePathStyle: true,
+      credentials: {
+        accessKeyId: process.env.SUPABASE_S3_ACCESS_KEY_ID,
+        secretAccessKey: process.env.SUPABASE_S3_SECRET_ACCESS_KEY
+      }
+    });
+  }
+
+  return clienteS3;
+}
 
 function obterContainer() {
   if (!container) {
@@ -90,6 +130,38 @@ async function guardarImagem(ficheiro) {
   const nome = `${Date.now()}-${
     crypto.randomBytes(12).toString('hex')
   }${extensao}`;
+
+  const usarSupabase = [
+    'SUPABASE_S3_ENDPOINT',
+    'SUPABASE_S3_REGION',
+    'SUPABASE_S3_ACCESS_KEY_ID',
+    'SUPABASE_S3_SECRET_ACCESS_KEY',
+    'SUPABASE_URL'
+  ].some((campo) => Boolean(process.env[campo]));
+
+  if (usarSupabase) {
+    const cliente = obterClienteS3();
+
+    const bucket =
+      process.env.SUPABASE_S3_BUCKET || 'produtos';
+
+    await cliente.send(
+      new PutObjectCommand({
+        Bucket: bucket,
+        Key: nome,
+        Body: ficheiro.buffer,
+        ContentType: ficheiro.mimetype
+      })
+    );
+
+    const baseUrl = process.env.SUPABASE_URL
+      .replace(/\/+$/, '');
+
+    return (
+      `${baseUrl}/storage/v1/object/public/` +
+      `${encodeURIComponent(bucket)}/${encodeURIComponent(nome)}`
+    );
+  }
 
   if (process.env.STORAGE_CONN) {
     const blob = obterContainer().getBlockBlobClient(nome);

@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { api, USAR_DADOS_SIMULADOS } from '../api/client.js';
 import produtosSimulados from '../data/produtos.json';
 
-const CATEGORIAS = ['Todos', 'Hortícolas', 'Fruta', 'Mel', 'Vinho', 'Queijo', 'Padaria'];
+const CATEGORIAS = ['Todos', 'Hortícolas', 'Fruta', 'Mel', 'Vinho', 'Queijo', 'Padaria', 'Outros'];
 
 export default function Catalogo() {
   const [produtos, setProdutos] = useState([]);

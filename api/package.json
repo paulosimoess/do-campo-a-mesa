@@ -9,8 +9,11 @@
     "dev": "nodemon src/server.js",
     "seed": "node src/seed/seed.js"
   },
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1166.0",
     "@azure/storage-blob": "^12.24.0",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",

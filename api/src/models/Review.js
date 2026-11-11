@@ -1,5 +1,4 @@
-// TODO (Passo 4): decidir se as avaliações ficam embebidas no produto/produtor
-// ou numa coleção própria, e justificar a decisão no relatório.
+// Avaliações em coleção própria para permitir crescimento e moderação independentes.
 const { Schema, model, Types } = require('mongoose');
 
 const reviewSchema = new Schema({

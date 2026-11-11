@@ -14,11 +14,9 @@ const productSchema = new Schema({
   biologico: { type: Boolean, default: false },
   epocas: [{ type: String, enum: ['Primavera', 'Verão', 'Outono', 'Inverno'] }],
   imagemUrl: String // Passo 8: URL da imagem no storage da Cloud
-  // TODO (Passo 4): avaliação média? índices para pesquisa?
 }, { timestamps: true });
 
-// TODO (Passo 4): criar índices adequados às pesquisas, p. ex.:
-// productSchema.index({ nome: 'text' });
+// Índices para pesquisa por nome e filtros de produtos.
 productSchema.index({ nome: 'text' });
 productSchema.index({ categoria: 1, biologico: 1, preco: 1 });
 

@@ -1,0 +1,42 @@
+
+.modal-confirmacao {
+  width: calc(100% - 2rem);
+  max-width: 440px;
+  padding: 1.75rem;
+  border: 1px solid $linha;
+  border-radius: 1rem;
+  background: #fff;
+  color: inherit;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+
+  &::backdrop {
+    background: rgba(0, 0, 0, 0.45);
+  }
+}
+
+.modal-confirmacao__titulo {
+  margin-bottom: 0.75rem;
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.modal-confirmacao__mensagem {
+  margin-bottom: 1.75rem;
+  color: $texto-secundario;
+  line-height: 1.6;
+}
+
+.modal-confirmacao__acoes {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.modal-confirmacao__acoes .modal-confirmacao__cancelar-vermelho {
+  &:hover {
+    color: #fff;
+    background-color: #dc3545;
+    border-color: #dc3545;
+  }
+}

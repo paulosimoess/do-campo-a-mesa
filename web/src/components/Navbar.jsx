@@ -1,12 +1,16 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useCarrinho } from '../context/CarrinhoContext.jsx';
+import { useState } from 'react';
+import ModalConfirmacao from './ModalConfirmacao.jsx';
 
 export default function Navbar() {
   const { utilizador, sair } = useAuth();
   const { linhas } = useCarrinho();
 
   const navigate = useNavigate();
+
+  const [confirmarLogout, setConfirmarLogout] = useState(false);
 
   function terminarSessao() {
     sair();
@@ -98,7 +102,7 @@ export default function Navbar() {
                 <button
                   type="button"
                   className="btn btn-outline-secondary navbar-btn-sair"
-                  onClick={terminarSessao}
+                  onClick={() => setConfirmarLogout(true)}
                 >
                   Sair
                 </button>
@@ -116,6 +120,20 @@ export default function Navbar() {
             )}
           </div>
         </div>
+
+        <ModalConfirmacao
+          aberto={confirmarLogout}
+          titulo="Terminar sessão"
+          mensagem="Tem a certeza de que pretende terminar a sua sessão?"
+          textoConfirmar="Terminar sessão"
+          variante="danger"
+          cancelarVermelho={false}
+          onCancelar={() => setConfirmarLogout(false)}
+          onConfirmar={() => {
+            setConfirmarLogout(false);
+            terminarSessao();
+          }}
+        />
       </nav>
     </header>
   );

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { api } from '../../api/client.js';
 import { useSocket } from '../../context/SocketContext.jsx';
+import ModalConfirmacao from '../../components/ModalConfirmacao.jsx';
 
 export default function PainelAdmin() {
   const { token } = useAuth();
@@ -18,6 +19,8 @@ export default function PainelAdmin() {
   const [leiloesAtivos, setLeiloesAtivos] = useState([]);
   const [erroLeiloes, setErroLeiloes] = useState('');
   const [aCarregarLeiloes, setACarregarLeiloes] = useState(true);
+  const [produtorParaRejeitar, setProdutorParaRejeitar] = useState(null);
+  const [avaliacaoParaOcultar, setAvaliacaoParaOcultar] = useState(null);
 
   useEffect(() => {
     async function carregarProdutoresPendentes() {
@@ -311,9 +314,7 @@ export default function PainelAdmin() {
                 <button
                   type="button"
                   className="btn btn-sm btn-outline-danger"
-                  onClick={() =>
-                    validarProdutor(produtor._id, false)
-                  }
+                  onClick={() => setProdutorParaRejeitar(produtor)}
                 >
                   Rejeitar
                 </button>
@@ -386,12 +387,7 @@ export default function PainelAdmin() {
                 <button
                   type="button"
                   className="btn btn-sm btn-outline-secondary"
-                  onClick={() =>
-                    moderarAvaliacao(
-                      avaliacao._id,
-                      true
-                    )
-                  }
+                  onClick={() => setAvaliacaoParaOcultar(avaliacao)}
                 >
                   Manter
                 </button>
@@ -493,6 +489,42 @@ export default function PainelAdmin() {
           ))}
         </div>
       </section>
+
+      <ModalConfirmacao
+        aberto={Boolean(produtorParaRejeitar)}
+        titulo="Rejeitar produtor"
+        mensagem={`Tem a certeza de que pretende rejeitar o registo de "${produtorParaRejeitar?.nome || 'este produtor'}"? O produtor ficará impedido de gerir produtos, encomendas e leilões.`}
+        textoConfirmar="Rejeitar produtor"
+        variante="danger"
+        cancelarVermelho={false}
+        onCancelar={() => setProdutorParaRejeitar(null)}
+        onConfirmar={() => {
+          if (!produtorParaRejeitar) return;
+
+          const produtorId = produtorParaRejeitar._id;
+          setProdutorParaRejeitar(null);
+
+          validarProdutor(produtorId, false);
+        }}
+      />
+
+      <ModalConfirmacao
+        aberto={Boolean(avaliacaoParaOcultar)}
+        titulo="Ocultar avaliação"
+        mensagem="Tem a certeza de que pretende ocultar esta avaliação? A avaliação deixará de estar visível publicamente."
+        textoConfirmar="Ocultar avaliação"
+        variante="danger"
+        cancelarVermelho={false}
+        onCancelar={() => setAvaliacaoParaOcultar(null)}
+        onConfirmar={() => {
+          if (!avaliacaoParaOcultar) return;
+
+          const avaliacaoId = avaliacaoParaOcultar._id;
+          setAvaliacaoParaOcultar(null);
+
+          moderarAvaliacao(avaliacaoId, false);
+        }}
+      />
     </section>
   );
 }
