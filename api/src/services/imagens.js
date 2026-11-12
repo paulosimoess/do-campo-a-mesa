@@ -7,7 +7,8 @@ const erro = require('../utils/erro');
 
 const {
   S3Client,
-  PutObjectCommand
+  PutObjectCommand,
+  HeadBucketCommand
 } = require('@aws-sdk/client-s3');
 
 const TIPOS = {
@@ -214,4 +215,42 @@ async function removerImagemLocal(imagemUrl) {
   }
 }
 
-module.exports = { guardarImagem, removerImagemLocal };
+async function verificarStorage() {
+  const inicio = Date.now();
+
+  try {
+    const cliente = obterClienteS3();
+
+    const bucket =
+      process.env.SUPABASE_S3_BUCKET || 'produtos';
+
+    await cliente.send(
+      new HeadBucketCommand({
+        Bucket: bucket
+      }),
+      {
+        abortSignal: AbortSignal.timeout(5000)
+      }
+    );
+
+    return {
+      estado: 'operacional',
+      servico: 'Supabase Storage',
+      tempoRespostaMs: Date.now() - inicio
+    };
+
+  } catch (err) {
+    console.warn(
+      'Falha na verificação do Supabase Storage:',
+      err.name
+    );
+
+    return {
+      estado: 'indisponivel',
+      servico: 'Supabase Storage',
+      tempoRespostaMs: Date.now() - inicio
+    };
+  }
+}
+
+module.exports = { guardarImagem, removerImagemLocal, verificarStorage };

@@ -6,8 +6,11 @@ const Order = require('../models/Order');
 const Auction = require('../models/Auction');
 const Review = require('../models/Review');
 const a = require('../utils/async');
-
 const erro = require('../utils/erro');
+const mongoose = require('mongoose');
+const {
+  verificarStorage
+} = require('../services/imagens');
 
 router.use(auth('admin'));
 
@@ -138,6 +141,55 @@ router.patch(
     }
 
     res.json(avaliacao);
+  })
+);
+
+
+router.get( '/cloud-status', a(async (req, res) => {
+    const inicio = Date.now();
+
+    // Estado da ligação MongoDB
+    const mongoLigado =
+      mongoose.connection.readyState === 1;
+
+    // Estado do Socket.IO
+    const io = req.app.get('io');
+
+    const socketAtivo = Boolean(io?.engine);
+
+    const clientesLigados = socketAtivo
+      ? io.engine.clientsCount
+      : 0;
+
+    // Verificação real do Supabase Storage
+    const storage = await verificarStorage();
+
+    res.json({
+      api: {
+        estado: 'operacional',
+        servico: 'Express / Render'
+      },
+
+      mongodb: {
+        estado: mongoLigado
+          ? 'operacional'
+          : 'indisponivel',
+        servico: 'MongoDB Atlas'
+      },
+
+      socketio: {
+        estado: socketAtivo
+          ? 'operacional'
+          : 'indisponivel',
+        servico: 'Socket.IO',
+        clientesLigados
+      },
+
+      storage,
+
+      tempoRespostaMs: Date.now() - inicio,
+      verificadoEm: new Date().toISOString()
+    });
   })
 );
 
