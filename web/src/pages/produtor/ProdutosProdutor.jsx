@@ -11,6 +11,7 @@ const estadoInicial = {
   preco: '',
   unidade: 'kg',
   stock: '',
+  biologico: false,
   epocas: []
 };
 
@@ -203,6 +204,7 @@ export default function ProdutosProdutor() {
         preco: Number(formulario.preco),
         unidade: formulario.unidade.trim(),
         stock: Number(formulario.stock || 0),
+        biologico: formulario.biologico,
         epocas: formulario.epocas
       };
 
@@ -301,6 +303,7 @@ export default function ProdutosProdutor() {
       preco: String(produto.preco),
       unidade: produto.unidade || '',
       stock: String(produto.stock ?? 0),
+      biologico: produto.biologico ?? false,
       epocas: produto.epocas || []
     });
 
@@ -469,6 +472,28 @@ export default function ProdutosProdutor() {
             />
           </div>
 
+          <div className="form-check mb-3">
+            <input
+              id="biologico"
+              type="checkbox"
+              className="form-check-input"
+              checked={formulario.biologico}
+              onChange={(e) =>
+                setFormulario((anterior) => ({
+                  ...anterior,
+                  biologico: e.target.checked
+                }))
+              }
+            />
+
+            <label
+              htmlFor="biologico"
+              className="form-check-label"
+            >
+              Produto biológico (BIO)
+            </label>
+          </div>
+
           <fieldset className="mb-3">
             <legend className="form-label">
               Épocas de disponibilidade
@@ -599,7 +624,14 @@ export default function ProdutosProdutor() {
             }
           >
             <div>
-              <h2>{produto.nome}</h2>
+              <h2>
+                {produto.nome}
+                {produto.biologico && (
+                  <span className="badge bg-success ms-2">
+                    BIO
+                  </span>
+                )}
+              </h2>
 
               <p className="texto-secundario">
                 {produto.categoria}
