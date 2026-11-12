@@ -10,8 +10,14 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
+    
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        if (env('APP_ENV') === 'production') {
+            $middleware->trustProxies(
+                at: '*',
+                headers: \Illuminate\Http\Request::HEADER_X_FORWARDED_PROTO
+            );
+        }
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
