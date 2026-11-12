@@ -118,9 +118,14 @@ router.patch(
 
     const avaliacao = await Review.findByIdAndUpdate(
       req.params.id,
-      { 
-        visivel, 
-        denuncias: 0 
+      {
+        $set: {
+          visivel,
+          denuncias: 0
+        },
+        $unset: {
+          denunciantes: 1
+        }
       },
       {
         new: true,

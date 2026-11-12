@@ -382,12 +382,14 @@ export default function PainelAdmin() {
                     'Produtor'}
                 </p>
               </div>
-
+   
               <div className="admin-lista__acoes">
                 <button
                   type="button"
                   className="btn btn-sm btn-outline-secondary"
-                  onClick={() => setAvaliacaoParaOcultar(avaliacao)}
+                  onClick={() =>
+                    moderarAvaliacao(avaliacao._id, true)
+                  }
                 >
                   Manter
                 </button>
@@ -396,10 +398,7 @@ export default function PainelAdmin() {
                   type="button"
                   className="btn btn-sm btn-outline-danger"
                   onClick={() =>
-                    moderarAvaliacao(
-                      avaliacao._id,
-                      false
-                    )
+                    setAvaliacaoParaOcultar(avaliacao)
                   }
                 >
                   Ocultar
