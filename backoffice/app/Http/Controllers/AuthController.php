@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
 {
@@ -28,8 +29,16 @@ class AuthController extends Controller
             );
 
             if (!$resposta->successful()) {
+                Log::warning('Falha no login do Backoffice via API Express', [
+                    'status_http' => $resposta->status(),
+                    'api_host' => parse_url(
+                        config('services.express_api.base_url'),
+                        PHP_URL_HOST
+                    ),
+                ]);
+
                 return back()->withErrors([
-                    'email' => 'Credenciais inválidas.'
+                    'email' => 'Não foi possível autenticar na API.'
                 ])->onlyInput('email');
             }
 
