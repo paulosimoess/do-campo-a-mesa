@@ -9,6 +9,8 @@ info:
     e leilões.
 
 servers:
+  - url: https://do-campo-a-mesa-api.onrender.com/api
+    description: Produção (Render)
   - url: http://localhost:3000/api
     description: Ambiente local
 
@@ -940,8 +942,9 @@ paths:
       description: >
         Permite ao produtor proprietário carregar ou substituir a imagem
         de um produto. São aceites imagens JPEG, PNG e WebP até 5 MB.
-        Em desenvolvimento, a imagem é guardada localmente.
-        Em produção, pode ser armazenada no Azure Blob Storage.
+        O serviço utiliza Supabase Storage através da API compatível com S3
+        quando configurado. Alternativamente, suporta Azure Blob Storage
+        mediante configuração específica ou armazenamento local em desenvolvimento.
       security:
         - bearerAuth: []
 
@@ -994,62 +997,6 @@ paths:
                     type: string
                     example: A imagem não pode ultrapassar 5 MB
 
-  /health:
-    get:
-      tags: [Sistema]
-      summary: Verificar o estado da API
-      responses:
-        '200':
-          description: API disponível
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  estado:
-                    type: string
-                    example: ok
-
-  /products/{id}/imagem:
-    parameters:
-      - $ref: '#/components/parameters/Id'
-
-    post:
-      tags: [Produtos]
-      summary: Carregar fotografia de um produto
-      security:
-        - bearerAuth: []
-
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              required: [imagem]
-              properties:
-                imagem:
-                  type: string
-                  format: binary
-
-      responses:
-        '200':
-          description: Fotografia guardada com sucesso
-
-        '400':
-          $ref: '#/components/responses/Erro'
-
-        '401':
-          $ref: '#/components/responses/Erro'
-
-        '403':
-          $ref: '#/components/responses/Erro'
-
-        '404':
-          $ref: '#/components/responses/Erro'
-
-        '413':
-          description: Imagem demasiado grande
 
 components:
   securitySchemes:
