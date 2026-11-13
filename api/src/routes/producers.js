@@ -7,6 +7,9 @@ const a = require('../utils/async');
 const erro = require('../utils/erro');
 const auth = require('../middleware/auth');
 const produtorValidado = require('../middleware/produtorValidado');
+const {
+  obterLocalizacaoAproximada
+} = require('../services/geocodificacao');
 
 // GET /api/producers?localidade=  -> 200 [produtores validados]
 router.get(
@@ -35,11 +38,7 @@ router.get(
 );
 
 // PATCH /api/producers/me — editar a própria exploração
-router.patch(
-  '/me',
-  auth('produtor'),
-  produtorValidado,
-  a(async (req, res) => {
+router.patch('/me',auth('produtor'), produtorValidado, a(async (req, res) => {
     const { nomeExploracao, descricao } = req.body || {};
 
     if (
@@ -56,38 +55,72 @@ router.patch(
       throw erro(400, 'Nome ou descrição inválidos');
     }
 
+    const produtor = await User.findOne({
+      _id: req.user.id,
+      papel: 'produtor'
+    });
+
+    if (!produtor) {
+      throw erro(404, 'Produtor não encontrado');
+    }
+
+    const alteracoes = {
+      'produtor.nomeExploracao': nome,
+      'produtor.descricao': texto
+    };
+
+    const localizacao = produtor.produtor?.localizacao;
+
+    const temCoordenadas =
+      Number.isFinite(localizacao?.lat) &&
+      Number.isFinite(localizacao?.lng);
+
+    if (
+      !temCoordenadas &&
+      produtor.produtor?.localidade
+    ) {
+      try {
+        const coordenadas =
+          await obterLocalizacaoAproximada(
+            produtor.produtor.localidade
+          );
+
+        if (coordenadas) {
+          alteracoes['produtor.localizacao'] = {
+            ...coordenadas,
+            origem: 'localidade'
+          };
+        }
+      } catch (err) {
+        console.warn(
+          'Não foi possível recuperar a localização:',
+          err.message
+        );
+      }
+    }
+
     const atualizado = await User.findOneAndUpdate(
       {
         _id: req.user.id,
         papel: 'produtor'
       },
-      {
-        $set: {
-          'produtor.nomeExploracao': nome,
-          'produtor.descricao': texto
-        }
-      },
+      { $set: alteracoes },
       {
         new: true,
         runValidators: true
       }
     );
 
-    if (!atualizado) {
-      throw erro(404, 'Produtor não encontrado');
-    }
-
     res.json({
       nomeExploracao: atualizado.produtor.nomeExploracao,
-      descricao: atualizado.produtor.descricao || ''
+      descricao: atualizado.produtor.descricao || '',
+      localizacao: atualizado.produtor.localizacao || null
     });
   })
 );
 
 // GET /api/producers/:id  -> 200 { produtor, produtos, avaliacaoMedia }
-router.get(
-  '/:id',
-  a(async (req, res) => {
+router.get( '/:id', a(async (req, res) => {
     const produtor = await User.findOne({
       _id: req.params.id,
       papel: 'produtor',
