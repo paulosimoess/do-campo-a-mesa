@@ -2,7 +2,7 @@
 
 Plataforma web para aproximar **produtores locais** e **consumidores**, permitindo consultar produtos, realizar encomendas e participar em **leilões em tempo real**.
 
-Projeto desenvolvido no âmbito da unidade curricular de **Desenvolvimento Web e para a Cloud**, do Mestrado em Engenharia Informática da ESTG — Universidade Politécnica de Viana do Castelo (2026/2027).
+Projeto desenvolvido no âmbito da unidade curricular de **Desenvolvimento Web e para a Cloud**, do Mestrado em Engenharia Informática da ESTG - Universidade Politécnica de Viana do Castelo (2026/2027).
 
 ## Aceder à aplicação
 
@@ -45,7 +45,7 @@ O frontend e o backoffice comunicam com a **mesma API Express**. O Laravel não 
 
 ### 1. API
 
-Cria `api/.env` a partir do ficheiro de exemplo disponível no projeto e configura a ligação ao MongoDB, o segredo JWT e as credenciais dos serviços utilizados. Não publiques os ficheiros `.env`.
+Criar `api/.env` a partir do ficheiro de exemplo disponível no projeto e configurar a ligação ao MongoDB, o segredo JWT e as credenciais dos serviços utilizados.
 
 ```bash
 cd api
@@ -57,7 +57,7 @@ API: `http://localhost:3000` · Swagger: `http://localhost:3000/api-docs/`
 
 ### 2. Frontend
 
-Configura `web/.env` para apontar à API local.
+Configurar `web/.env` para apontar à API local.
 
 ```bash
 cd web
@@ -69,7 +69,7 @@ Frontend Vite: `http://localhost:5173`
 
 ### 3. Backoffice (opcional)
 
-Prepara `backoffice/.env` com base no ficheiro de exemplo. Para execução local, configura a API em `http://localhost:3000/api` e a base SQLite do Laravel.
+Preparar `backoffice/.env` com base no ficheiro de exemplo. Para execução local, configura a API em `http://localhost:3000/api` e a base SQLite do Laravel.
 
 ```bash
 cd backoffice
@@ -87,10 +87,3 @@ Backoffice: `http://127.0.0.1:8000`. O login administrativo depende de a API Exp
 - **[Especificação OpenAPI](api/openapi.yaml):** endpoints e contratos da API.
 - **[Documentação interativa](https://do-campo-a-mesa-api.onrender.com/api-docs/):** Swagger UI.
 
-## Limitações conhecidas
-
-A gestão do stock das encomendas e a atualização das licitações recorrem a operações atómicas sobre documentos individuais, mas não a transações multidocumento. Os lotes vendidos através de leilões **não atualizam automaticamente o stock do produto associado**. Estas limitações, bem como a suspensão por inatividade dos serviços gratuitos, são discutidas no relatório.
-
-## Desenvolvimento e ferramentas
-
-Projeto desenvolvido com Git e GitHub. O **ChatGPT** foi utilizado como assistente no esclarecimento de dúvidas, diagnóstico de erros, revisão de código, apoio ao deployment e documentação. As funcionalidades foram verificadas através de testes locais e na versão publicada.
