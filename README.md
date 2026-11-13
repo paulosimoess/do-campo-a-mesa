@@ -1,10 +1,10 @@
 # Do Campo à Mesa
 
-**Relatório final**  
+**Relatório final**
 
 
-**Mestrado em Engenharia Informática**  
-**ESTG, Universidade Politécnica de Viana do Castelo**  
+**Mestrado em Engenharia Informática**
+**ESTG, Universidade Politécnica de Viana do Castelo**
 **Ano letivo 2026/2027**
 
 
@@ -79,7 +79,7 @@ O Laravel disponibiliza três páginas protegidas:
 ### 3.1. Visão geral
 
  
-![Figura 1 — Arquitetura do Do Campo à Mesa](docs/imagens/arquitetura.png) 
+![Figura 1 — Arquitetura do Do Campo à Mesa](docs/imagens/arquitetura.png)
 *Figura 1 - Componentes e serviços cloud utilizados no projeto.*
 
 ### 3.2. Tecnologias utilizadas
@@ -121,9 +121,9 @@ A comunicação HTTP encontra-se centralizada no cliente da API, permitindo incl
 
 No catálogo, foram incluídos mecanismos de pesquisa, categorias e filtragem de produtos biológicos. O projeto partiu de uma versão com dados simulados, posteriormente integrada com os dados disponibilizados pelo backend.
 
-  
-![Figura 2 — Catálogo em desktop e telemóvel](docs/imagens/catalogo-responsivo1.png)  
-![Figura 3 — Catálogo em desktop e telemóvel](docs/imagens/catalogo-responsivo2.png) 
+
+![Figura 2 — Catálogo em desktop e telemóvel](docs/imagens/catalogo-responsivo1.png)
+![Figura 3 — Catálogo em desktop e telemóvel](docs/imagens/catalogo-responsivo2.png)
 *Figuras 2 e 3 - Adaptação do catálogo a diferentes dimensões de ecrã.*
 
 ## 5. API REST, MongoDB e operações de negócio
