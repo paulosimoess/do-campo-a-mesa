@@ -469,6 +469,7 @@ export default function ProdutosProdutor() {
               className="form-control"
               value={formulario.stock}
               onChange={alterar('stock')}
+              onWheel={(e) => e.currentTarget.blur()}
             />
           </div>
 
